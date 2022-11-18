@@ -1,13 +1,21 @@
 # Proposal
 
-Put a description of what you gon do
+Dungeon Crawler Bullet Hell Game
 
 ## Needs to Have list
 
-- thing 1
-- thing 2
+- Somewhat randomly generating rooms
+- 3-4 dungeon floors
+- Multiple types of items
+- Dodge - rolling
+- Several enemy types
 
 ## Want to Have List
 
-- cool thing
-- nother cool thing
+- Shop NPCs
+- Random events
+- Good sprites
+- Breakable objects
+- Floor Bosses
+- Multiple weapons
+
