@@ -18,33 +18,36 @@ class Rooms {
 }
 
 class Enemy {
-  constructor(x, y, w, h, dx, dy, bulletspeed, health) {
+  constructor(x, y, w, h, dx, dy, bulletdx, bulletdy, health) {
     this.x = x;
     this.y = y;
     this.w = w;
     this.h = h;
     this.dx = dx;
     this.dy = dy;
-    this.bulletspeedv = bulletspeed;
+    this.bulletdx = bulletdx;
+    this.bulletdy = bulletdy;
     this.health = health;
   }
 
-  move(){
+  move(player){
     // if (check where enemy is in relation)
   }
 
-  shoot(){
-
+  shoot(player){
+    let someBullet = new EnemyBullet(this.x, this.y, this.bulletdx, this.bulletdy);
+    theBullets.push(someBullet);
   }
 
   display(){
-
+    fill("black")
+    rect(this.x, this.y, this.w, this.h)
   }
 
   collision(wall){
-    for(let i = 0; i < theWalls.length; i++) {
-      if ()
-    }
+    // for(let i = 0; i < theWalls.length; i++) {
+    //   if ()
+    // }
   }
 }
 
@@ -59,11 +62,14 @@ class EnemyBullet {
 
 }
 
-let theBullets = []
-let theWalls = []
+let theBullets = [];
+let theEnemies = []
+let yourBullets = [];
+let theWalls = [];
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
+  new Sprite(); 
 }
 
 function draw() {

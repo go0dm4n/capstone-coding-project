@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "p5.play": "^3.2.14",
+    "planck": "^1.0.0-alpha.4"
+  }
+}
