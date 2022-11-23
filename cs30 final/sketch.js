@@ -7,16 +7,6 @@
 // - describe what you did to take this project "above and beyond"
 // PEE FIVE DOT PLAY
 
-class Player {
-  constructor(x,y,dx,dy) {
-
-  }
-}
-
-class Rooms {
-
-}
-
 class Enemy {
   constructor(x, y, w, h, dx, dy, bulletdx, bulletdy, health) {
     this.x = x;
@@ -40,8 +30,8 @@ class Enemy {
   }
 
   display(){
-    fill("black")
-    rect(this.x, this.y, this.w, this.h)
+    fill("black");
+    rect(this.x, this.y, this.w, this.h);
   }
 
   collision(wall){
@@ -51,28 +41,35 @@ class Enemy {
   }
 }
 
-class Guns {
-
-}
-class YourBullet {
-
-}
-
-class EnemyBullet {
-
-}
-
 let theBullets = [];
-let theEnemies = []
+let theEnemies = [];
 let yourBullets = [];
 let theWalls = [];
 
+playerspeed = 5
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  new Sprite(); 
+  player = new Sprite();
 }
 
 function draw() {
   background(220);
+  moveCharacter()
 }
 
+function moveCharacter(){
+  if (kb.pressing('ArrowLeft')) {
+    player.vel.x = -playerspeed;
+  }
+  if (kb.pressing('ArrowRight')) {
+    player.vel.x = playerspeed;
+  }
+  if (kb.pressing('ArrowUp')) {
+    player.vel.y = -playerspeed;
+  }
+  if (kb.pressing('ArrowDown')) {
+    player.vel.y = playerspeed;
+  }
+  else player.vel.x = 0;
+}
