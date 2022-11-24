@@ -73,3 +73,14 @@ function moveCharacter(){
   }
   else player.vel.x = 0;
 }
+
+// fire(targetX, targetY) {
+//   this.x = width/2;
+//   this.y = height/2;
+//   this.angle = atan2(targetY-height/2, targetX-width/2);
+// }
+
+// update() {
+//   this.x += cos(this.angle) * this.speed;
+//   this.y += sin(this.angle) * this.speed;
+// }
