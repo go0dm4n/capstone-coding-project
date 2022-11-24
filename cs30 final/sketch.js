@@ -7,50 +7,19 @@
 // - describe what you did to take this project "above and beyond"
 // PEE FIVE DOT PLAY
 
-class Enemy {
-  constructor(x, y, w, h, dx, dy, bulletdx, bulletdy, health) {
-    this.x = x;
-    this.y = y;
-    this.w = w;
-    this.h = h;
-    this.dx = dx;
-    this.dy = dy;
-    this.bulletdx = bulletdx;
-    this.bulletdy = bulletdy;
-    this.health = health;
-  }
-
-  move(player){
-    // if (check where enemy is in relation)
-  }
-
-  shoot(player){
-    let someBullet = new EnemyBullet(this.x, this.y, this.bulletdx, this.bulletdy);
-    theBullets.push(someBullet);
-  }
-
-  display(){
-    fill("black");
-    rect(this.x, this.y, this.w, this.h);
-  }
-
-  collision(wall){
-    // for(let i = 0; i < theWalls.length; i++) {
-    //   if ()
-    // }
-  }
-}
-
 let theBullets = [];
 let theEnemies = [];
 let yourBullets = [];
 let theWalls = [];
+let minEn = 1
+let maxEn = 6
 
-playerspeed = 5
+let playerspeed = 5
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   player = new Sprite();
+  spawnEnemies()
 }
 
 function draw() {
@@ -61,18 +30,38 @@ function draw() {
 function moveCharacter(){
   if (kb.pressing('ArrowLeft')) {
     player.vel.x = -playerspeed;
+    console.log("left")
   }
-  if (kb.pressing('ArrowRight')) {
+  else if (kb.pressing('ArrowRight')) {
     player.vel.x = playerspeed;
+    console.log("right")
   }
-  if (kb.pressing('ArrowUp')) {
+  else if (kb.pressing('ArrowUp')) {
     player.vel.y = -playerspeed;
+    console.log("up")
   }
-  if (kb.pressing('ArrowDown')) {
+  else if (kb.pressing('ArrowDown')) {
     player.vel.y = playerspeed;
+    console.log("down")
   }
-  else player.vel.x = 0;
+  else {
+    player.vel.x = 0;
+    player.vel.y = 0;
+  }
 }
+
+function mousePressed() {
+  
+}
+
+function spawnEnemies() {
+  for(let i = 0; i < random(minEn, maxEn); i ++) {
+    enemy = new Sprite(random(0, width), random(0, height))
+    enemy.collider = "static"
+    theEnemies.push(enemy)
+  }
+}
+
 
 // fire(targetX, targetY) {
 //   this.x = width/2;

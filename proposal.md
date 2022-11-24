@@ -3,24 +3,24 @@
 Dungeon Crawler Bullet Hell Game
 
 ## Needs to Have list
-
-- 3-4 dungeon floors
+- 1 dungeon floors
 - Multiple types of items
-    - Guns (hopefully)
     - Passive buffs
     - Healing
     - Money
-- Dodge rolling
-- Several enemy types
-- Shop NPCs
+- Dodge rolling (period of immunity where no damage)
+- 4-5 enemy types
+- Sound
+- Decent sprites
 
 ## Want to Have List
-
 - Random events
-- Good sprites
+- amazing sprites
 - Breakable objects
 - Floor Bosses
 - Multiple weapons
+- Shop NPCs
+- Animation
 
 ## Unsure where to put
 - Somewhat randomly generating rooms
