@@ -14,11 +14,12 @@ let theWalls = [];
 let minEn = 1
 let maxEn = 6
 
-let playerspeed = 5
+let speed = 3;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   player = new Sprite();
+  player.collider ="dynamic"
   spawnEnemies()
 }
 
@@ -28,36 +29,34 @@ function draw() {
 }
 
 function moveCharacter(){
-  if (kb.pressing('ArrowLeft')) {
-    player.vel.x = -playerspeed;
-    console.log("left")
+  player.speed = speed;
+  if (keyIsDown(87)) { //up
+    player.direction = 270;
   }
-  else if (kb.pressing('ArrowRight')) {
-    player.vel.x = playerspeed;
-    console.log("right")
+  if (keyIsDown(65)) { //left
+    player.direction = 180;
   }
-  else if (kb.pressing('ArrowUp')) {
-    player.vel.y = -playerspeed;
-    console.log("up")
+  if (keyIsDown(83)) { //down
+    player.direction = 90;
   }
-  else if (kb.pressing('ArrowDown')) {
-    player.vel.y = playerspeed;
-    console.log("down")
-  }
-  else {
-    player.vel.x = 0;
-    player.vel.y = 0;
+  if (keyIsDown(68)) { //right
+    player.direction = 0;
   }
 }
 
 function mousePressed() {
-  
+  for (let i = theBullets.length; i > 0; i--) {
+    bullet = new Sprite(player.x, player.y);
+    bullet.collider = "dynamic"
+    theBullets.push(bullet)
+    console.log(theBullets)
+  }
 }
 
 function spawnEnemies() {
   for(let i = 0; i < random(minEn, maxEn); i ++) {
     enemy = new Sprite(random(0, width), random(0, height))
-    enemy.collider = "static"
+    enemy.collider = "dynamic"
     theEnemies.push(enemy)
   }
 }
