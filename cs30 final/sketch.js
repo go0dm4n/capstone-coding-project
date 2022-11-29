@@ -15,42 +15,51 @@ let minEn = 1
 let maxEn = 6
 
 let speed = 3;
+let bulletspeed = 5
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   player = new Sprite();
   player.collider ="dynamic"
+
   spawnEnemies()
+
+  bullet = new Sprite(player.x, player.y);
+  theBullets.push(bullet)
 }
 
 function draw() {
   background(220);
   moveCharacter()
+  enemyKilled()
+  checkCollide()
 }
 
 function moveCharacter(){
-  player.speed = speed;
   if (keyIsDown(87)) { //up
-    player.direction = 270;
+    player.vel.y = -speed
   }
   if (keyIsDown(65)) { //left
-    player.direction = 180;
+    player.vel.x = -speed
   }
   if (keyIsDown(83)) { //down
-    player.direction = 90;
+    player.vel.y = speed
   }
   if (keyIsDown(68)) { //right
-    player.direction = 0;
+    player.vel.x = speed
+  }
+  if (!keyIsPressed) {
+    player.vel.x = 0
+    player.vel.y = 0
   }
 }
 
 function mousePressed() {
-  for (let i = theBullets.length; i > 0; i--) {
-    bullet = new Sprite(player.x, player.y);
-    bullet.collider = "dynamic"
-    theBullets.push(bullet)
-    console.log(theBullets)
-  }
+  bullet = new Sprite(player.x + player.width, player.y);
+  bullet.collider = "kinematic"
+  bullet.diameter = 10
+  bullet.moveTowards(mouse, .06)
+  theBullets.push(bullet)
 }
 
 function spawnEnemies() {
@@ -61,7 +70,29 @@ function spawnEnemies() {
   }
 }
 
+function enemyKilled() {
+  for(let i = theEnemies.length - 1; i >= 0; i--) {
+    for(let k = theBullets.length - 1; k >= 0; k--) {
+      if (theEnemies[i].collides(theBullets[k])) {
+        theBullets[k].remove()
+        theEnemies[i].remove()
+      }
+    }
+  }
+}
 
+function checkCollide() {
+  for(let i = theEnemies.length - 1; i >= 0; i--) {
+    for(let k = theBullets.length - 1; k >= 0; k--) {
+    if(theBullets[k].collides(player)) {
+      player.collider = "none"
+    }
+    else if (player.collides(theEnemies[i])){
+      player.collider = "dynamic"
+      }
+    }
+  }
+}
 // fire(targetX, targetY) {
 //   this.x = width/2;
 //   this.y = height/2;
