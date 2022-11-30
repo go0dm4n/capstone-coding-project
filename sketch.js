@@ -7,12 +7,17 @@
 // - describe what you did to take this project "above and beyond"
 // PEE FIVE DOT PLAY
 
+let room = []
 let theBullets = [];
 let theEnemies = [];
 let yourBullets = [];
 let theWalls = [];
+let theCoins = [];
+
+
 let minEn = 1
 let maxEn = 6
+let money = 0;
 
 let speed = 3;
 let bulletspeed = 5
@@ -20,12 +25,8 @@ let bulletspeed = 5
 function setup() {
   createCanvas(windowWidth, windowHeight);
   player = new Sprite();
-  player.collider ="dynamic"
-
+  player.health = 6
   spawnEnemies()
-
-  bullet = new Sprite(player.x, player.y);
-  theBullets.push(bullet)
 }
 
 function draw() {
@@ -33,19 +34,20 @@ function draw() {
   moveCharacter()
   enemyKilled()
   checkCollide()
+  pickupItems()
 }
 
 function moveCharacter(){
-  if (keyIsDown(87)) { //up
+  if (kb.pressing('W')) { //up
     player.vel.y = -speed
   }
-  if (keyIsDown(65)) { //left
+  if (kb.pressing('A')) { //left
     player.vel.x = -speed
   }
-  if (keyIsDown(83)) { //down
+  if (kb.pressing('S')) { //down
     player.vel.y = speed
   }
-  if (keyIsDown(68)) { //right
+  if (kb.pressing('D')) { //right
     player.vel.x = speed
   }
   if (!keyIsPressed) {
@@ -55,17 +57,20 @@ function moveCharacter(){
 }
 
 function mousePressed() {
-  bullet = new Sprite(player.x + player.width, player.y);
-  bullet.collider = "kinematic"
-  bullet.diameter = 10
-  bullet.moveTowards(mouse, .06)
-  theBullets.push(bullet)
+  shootBullet()
 }
 
 function spawnEnemies() {
   for(let i = 0; i < random(minEn, maxEn); i ++) {
     enemy = new Sprite(random(0, width), random(0, height))
-    enemy.collider = "dynamic"
+    enemy.health = (random(0, 2))
+    enemy.collider = "kinematic"
+    if(enemy.health < 1) {
+      enemy.color = "red"
+    }
+    if(enemy.health > 1) {
+      enemy.color = "blue"
+    }
     theEnemies.push(enemy)
   }
 }
@@ -74,8 +79,16 @@ function enemyKilled() {
   for(let i = theEnemies.length - 1; i >= 0; i--) {
     for(let k = theBullets.length - 1; k >= 0; k--) {
       if (theEnemies[i].collides(theBullets[k])) {
+        theEnemies[i].health -= theBullets[k].strength
         theBullets[k].remove()
-        theEnemies[i].remove()
+
+        if(theEnemies[i].health <= 0) {
+          theEnemies[i].remove()
+          coin = new Sprite(theEnemies[i].x, theEnemies[i].y, 30);
+          coin.color = 'yellow';
+          theCoins.push(coin);
+        }
+        
       }
     }
   }
@@ -84,15 +97,45 @@ function enemyKilled() {
 function checkCollide() {
   for(let i = theEnemies.length - 1; i >= 0; i--) {
     for(let k = theBullets.length - 1; k >= 0; k--) {
-    if(theBullets[k].collides(player)) {
-      player.collider = "none"
-    }
-    else if (player.collides(theEnemies[i])){
-      player.collider = "dynamic"
+      if(theBullets[k].collides(player)) {
+        player.collider = "none"
       }
+      else if (player.overlaps(theEnemies[i])){
+        player.collider = "dynamic"
+        console.log("ouch")
+        }
     }
   }
 }
+
+function shootBullet() {
+  bullet = new Sprite(player.x + player.width, player.y);
+  bullet.collider = "dynamic"
+  bullet.diameter = 10
+  bullet.strength = 1
+
+  bullet.moveTowards(mouse, 10 / dist(bullet.x, bullet.y, mouseX, mouseY))
+  theBullets.push(bullet)
+}
+
+function pickupItems() {
+  for (let i = theCoins.length - 1; i >= 0; i --){
+    if(player.overlaps(theCoins[i])) {
+      theCoins[i].remove
+      money += 1
+    }
+  }
+}
+
+function makeRoom() {
+}
+
+// function drawRoom() {
+//   for(let i = 0; i < room.length) {
+//     for(let )
+//   }
+// }
+
 // fire(targetX, targetY) {
 //   this.x = width/2;
 //   this.y = height/2;
