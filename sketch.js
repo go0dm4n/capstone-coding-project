@@ -170,12 +170,10 @@ function changeTile(){
   let xPos = Math.floor(mouseX/cellWidth);
   let yPos = Math.floor(mouseY/cellHeight);
   if (room[yPos][xPos] === 0) {
-    console.log("WHITE")
-    room[yPos][xPos] === 1;
+    room[yPos][xPos] = 1;
   }
   else if (room[yPos][xPos] === 1) {
-    console.log("BLACk")
-    room[yPos][xPos] === 0;
+    room[yPos][xPos] = 0;
   }   
 }
 
