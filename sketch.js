@@ -22,11 +22,17 @@ let money = 0;
 let speed = 3;
 let bulletspeed = 5
 
-let COLS = 20
-let ROWS = 10
+const COLS = 20
+const ROWS = 10
 
 let cellHeight;
 let cellWidth;
+
+let xPos;
+let ypos;
+
+let enemyxPos;
+let enemyyPos;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -69,13 +75,18 @@ function moveCharacter(){
 }
 
 function mousePressed() {
-  // shootBullet();
+  shootBullet();
   changeTile();
 }
 
 function spawnEnemies() {
   for(let i = 0; i < random(minEn, maxEn); i ++) {
     enemy = new Sprite(random(0, width), random(0, height));
+    enemyxPos = Math.floor(enemy.x/cellWidth);
+    enemyxyPos = Math.floor(enemy.y/cellWidth);
+    while (room[enemyyPos][enemyxPos] === 1) {
+      enemy.x = random(0, width)
+    }
     enemy.health = (random(0, 2));
     enemy.collider = "kinematic";
     if(enemy.health < 1) {
@@ -144,31 +155,31 @@ function pickupItems() {
 function drawRoom() {
   let cellWidth = width / COLS;
   let cellHeight = height / ROWS;
-  for (let i = 0; i < COLS; i++) {
-    for (let k = 0; k < ROWS; k++) {
+  for (let i = 0; i < ROWS; i++) {
+    for (let k = 0; k < COLS; k++) {
       if (room[i][k] === 0) {
         fill("white");
       }
       if (room[i][k] === 1) {
         fill("black");
       }   
-      rect(i * cellWidth, k * cellHeight, cellWidth, cellHeight); 
+      rect(k * cellWidth, i * cellHeight, cellWidth, cellHeight); 
     }
   }
 }
 
 function makeRoom() {
-  for (let i = 0; i < COLS; i++) {
+  for (let i = 0; i < ROWS; i++) {
     room.push([]);
-    for (let k = 0; k < ROWS; k++) {
+    for (let k = 0; k < COLS; k++) {
       room[i].push(0);
     }
   }
 }
 
 function changeTile(){
-  let xPos = Math.floor(mouseX/cellWidth);
-  let yPos = Math.floor(mouseY/cellHeight);
+  xPos = Math.floor(mouseX/cellWidth);
+  yPos = Math.floor(mouseY/cellHeight);
   if (room[yPos][xPos] === 0) {
     room[yPos][xPos] = 1;
   }
@@ -177,6 +188,9 @@ function changeTile(){
   }   
 }
 
+function moveEnemies() {
+
+}
 
 // function drawRoom() {
 //   for(let i = 0; i < room.length) {
