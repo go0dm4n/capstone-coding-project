@@ -34,15 +34,20 @@ let ypos;
 let enemyxPos;
 let enemyyPos;
 
+function preload() {
+  l1 = loadJSON("level grids/1-1.json")
+}
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
   cellWidth = width / COLS;
   cellHeight = height / ROWS;
 
   player = new Sprite();
-  player.health = 6
+  player.health = 6;
+  // makeRoom();
+  room = l1
   spawnEnemies();
-  makeRoom();
 }
 
 
@@ -56,6 +61,14 @@ function draw() {
 }
 
 function moveCharacter(){
+  playerxPos = Math.floor((player.x - player.width/2)/cellWidth);
+  playeryPos = Math.floor((player.y - player.height/2)/cellHeight);
+
+  if(room[playeryPos][playerxPos] === 1) {
+    player.collider = "static"
+    console.log("bonk")
+  }
+
   if (kb.pressing('W')) { //up
     player.vel.y = -speed;
   }
@@ -72,20 +85,26 @@ function moveCharacter(){
     player.vel.x = 0;
     player.vel.y = 0;
   }
+
+
 }
 
 function mousePressed() {
   shootBullet();
+  trackBullet();
   changeTile();
 }
 
 function spawnEnemies() {
   for(let i = 0; i < random(minEn, maxEn); i ++) {
     enemy = new Sprite(random(0, width), random(0, height));
-    enemyxPos = Math.floor(enemy.x/cellWidth);
-    enemyxyPos = Math.floor(enemy.y/cellWidth);
-    while (room[enemyyPos][enemyxPos] === 1) {
-      enemy.x = random(0, width)
+    enemyxPos = Math.floor((enemy.x - enemy.width/2)/cellWidth);
+    enemyyPos = Math.floor((enemy.y - enemy.height/2)/cellHeight);
+    enemyxPos2 = Math.floor((enemy.x + enemy.width/2)/cellWidth);
+    enemyyPos2 = Math.floor((enemy.y + enemy.height/2)/cellHeight);
+    console.log(enemyyPos, enemyxPos)
+    if (room[enemyyPos][enemyxPos] === 1 || room[enemyyPos2][enemyxPos2] === 1 || room[enemyyPos][enemyxPos2] === 1 || room[enemyyPos2][enemyxPos] === 1) {
+      enemy.remove()
     }
     enemy.health = (random(0, 2));
     enemy.collider = "kinematic";
@@ -141,6 +160,16 @@ function shootBullet() {
 
   bullet.moveTowards(mouse, 10 / dist(bullet.x, bullet.y, mouseX, mouseY));
   theBullets.push(bullet);
+}
+
+function trackBullet() {
+  for(let i = theBullets.length; i >= 0; i--) {
+    bulletxPos = (bullet.x/cellWidth)
+    bulletyPos = (bullet.y/cellHeight)
+    if(room[bulletyPos][bulletxPos] === 1) {
+      bullet.remove()
+    }
+  }
 }
 
 function pickupItems() {
