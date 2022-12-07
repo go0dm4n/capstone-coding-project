@@ -2,6 +2,8 @@
 // Uday Sandhu
 // November 21st, 2022+
 
+const { Camera } = require("../../../.vscode/extensions/wmcicompsci.cs30-p5-1.5.0/p5types");
+
 //
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
@@ -11,7 +13,6 @@ let room = []
 let theBullets = [];
 let theEnemies = [];
 let yourBullets = [];
-let theWalls = [];
 let theCoins = [];
 
 
@@ -33,6 +34,8 @@ let ypos;
 
 let enemyxPos;
 let enemyyPos;
+let enemyxPos2;
+let enemyyPos2;
 
 function preload() {
   l1 = loadJSON("level grids/1-1.json")
@@ -61,12 +64,15 @@ function draw() {
 }
 
 function moveCharacter(){
+  player.rotation = 0;
   playerxPos = Math.floor((player.x - player.width/2)/cellWidth);
   playeryPos = Math.floor((player.y - player.height/2)/cellHeight);
+  playerxPos2 = Math.floor((player.x + player.width/2)/cellWidth);
+  playeryPos2 = Math.floor((player.y + player.height/2)/cellHeight);
 
-  if(room[playeryPos][playerxPos] === 1) {
-    player.collider = "static"
-    console.log("bonk")
+  if(room[playeryPos][playerxPos] === 1 || room[playeryPos2][playerxPos] === 1 || room[playeryPos][playerxPos2] === 1 || room[playeryPos2][playerxPos2] === 1) {
+    player.x -= player.vel.x
+    player.y -= player.vel.y
   }
 
   if (kb.pressing('W')) { //up
@@ -164,10 +170,10 @@ function shootBullet() {
 
 function trackBullet() {
   for(let i = theBullets.length; i >= 0; i--) {
-    bulletxPos = (bullet.x/cellWidth)
-    bulletyPos = (bullet.y/cellHeight)
+    bulletxPos = Math.floor(theBullets[i].x/cellWidth)
+    bulletyPos = Math.floor(theBullets[i].y/cellHeight)
     if(room[bulletyPos][bulletxPos] === 1) {
-      bullet.remove()
+      theBullets[i].remove()
     }
   }
 }
