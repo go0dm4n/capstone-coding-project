@@ -2,8 +2,6 @@
 // Uday Sandhu
 // November 21st, 2022+
 
-const { Camera } = require("../../../.vscode/extensions/wmcicompsci.cs30-p5-1.5.0/p5types");
-
 //
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
@@ -43,11 +41,15 @@ function preload() {
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
+
+
   cellWidth = width / COLS;
   cellHeight = height / ROWS;
 
   player = new Sprite();
   player.health = 6;
+  player.collider = "k"
+
   // makeRoom();
   room = l1
   spawnEnemies();
@@ -113,7 +115,7 @@ function spawnEnemies() {
       enemy.remove()
     }
     enemy.health = (random(0, 2));
-    enemy.collider = "kinematic";
+    enemy.collider = "k";
     if(enemy.health < 1) {
       enemy.color = "red";
     }
@@ -127,9 +129,11 @@ function spawnEnemies() {
 function enemyKilled() {
   for(let i = theEnemies.length - 1; i >= 0; i--) {
     for(let k = theBullets.length - 1; k >= 0; k--) {
-      if (theEnemies[i].collides(theBullets[k])) {
+      if (theEnemies[i].overlaps(theBullets[k])) {
         theEnemies[i].health -= theBullets[k].strength;
+        
         theBullets[k].remove();
+        theBullets.splice(k, 1);
 
         if(theEnemies[i].health <= 0) {
           theEnemies[i].remove();
@@ -137,8 +141,7 @@ function enemyKilled() {
           coin.collider = "none";
           coin.color = 'yellow';
           theCoins.push(coin);
-        }
-        
+        }    
       }
     }
   }
@@ -148,11 +151,12 @@ function checkCollide() {
   for(let i = theEnemies.length - 1; i >= 0; i--) {
     for(let k = theBullets.length - 1; k >= 0; k--) {
       if(theBullets[k].collides(player)) {
-        player.collider = "none";
+        player.collider = "k";
       }
       else if (player.overlaps(theEnemies[i])){
-        player.collider = "dynamic"
-        console.log("ouch")
+        player.collider = "k"
+        player.health -= 1
+        console.log(player.health)
         }
     }
   }
@@ -160,7 +164,7 @@ function checkCollide() {
 
 function shootBullet() {
   bullet = new Sprite(player.x + player.width, player.y);
-  bullet.collider = "dynamic"
+  bullet.collider = "k"
   bullet.diameter = 10;
   bullet.strength = 1;
 
@@ -170,10 +174,15 @@ function shootBullet() {
 
 function trackBullet() {
   for(let i = theBullets.length; i >= 0; i--) {
-    bulletxPos = Math.floor(theBullets[i].x/cellWidth)
-    bulletyPos = Math.floor(theBullets[i].y/cellHeight)
+    if(theBullets[i].x > width || theBullets[i].x < 0 || theBullets[i].y > height || theBullets[i].y < 0) {
+      theBullets[i].remove();
+      theBullets.splice(i, 1);
+    }
+    bulletxPos = Math.floor(theBullets[i].x/cellWidth);
+    bulletyPos = Math.floor(theBullets[i].y/cellHeight);
     if(room[bulletyPos][bulletxPos] === 1) {
-      theBullets[i].remove()
+      theBullets[i].remove();
+      theBullets.splice(i, 1);
     }
   }
 }
@@ -182,6 +191,7 @@ function pickupItems() {
   for (let i = theCoins.length - 1; i >= 0; i --){
     if(player.overlaps(theCoins[i])) {
       theCoins[i].remove;
+      theCoins.splice(i,1);
       money += 1;
     }
   }
@@ -226,20 +236,3 @@ function changeTile(){
 function moveEnemies() {
 
 }
-
-// function drawRoom() {
-//   for(let i = 0; i < room.length) {
-//     for(let )
-//   }
-// }
-
-// fire(targetX, targetY) {
-//   this.x = width/2;
-//   this.y = height/2;
-//   this.angle = atan2(targetY-height/2, targetX-width/2);
-// }
-
-// update() {
-//   this.x += cos(this.angle) * this.speed;
-//   this.y += sin(this.angle) * this.speed;
-// }
