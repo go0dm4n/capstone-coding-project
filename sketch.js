@@ -106,22 +106,34 @@ function mousePressed() {
 function spawnEnemies() {
   for(let i = 0; i < random(minEn, maxEn); i ++) {
     enemy = new Sprite(random(0, width), random(0, height));
-    enemyxPos = Math.floor((enemy.x - enemy.width/2)/cellWidth);
-    enemyyPos = Math.floor((enemy.y - enemy.height/2)/cellHeight);
-    enemyxPos2 = Math.floor((enemy.x + enemy.width/2)/cellWidth);
-    enemyyPos2 = Math.floor((enemy.y + enemy.height/2)/cellHeight);
-    console.log(enemyyPos, enemyxPos)
-    if (room[enemyyPos][enemyxPos] === 1 || room[enemyyPos2][enemyxPos2] === 1 || room[enemyyPos][enemyxPos2] === 1 || room[enemyyPos2][enemyxPos] === 1) {
+
+    if (enemy.x > width || enemy.y > height || enemy.y < 0 || enemy.x < 0) {
       enemy.remove()
     }
+
+    enemyxPos = Math.floor((enemy.x - (enemy.width/2))/cellWidth);
+
+    enemyyPos = Math.floor((enemy.y - (enemy.height/2))/cellHeight);
+
+    enemyxPos2 = Math.floor((enemy.x + enemy.width/2)/cellWidth);
+    
+    enemyyPos2 = Math.floor((enemy.y + enemy.height/2)/cellHeight);
+
+    console.log(enemyxPos, enemyyPos)
+    if (room[enemyyPos][enemyxPos] === 1) {
+      enemy.remove()
+    }
+
     enemy.health = (random(0, 2));
     enemy.collider = "k";
+
     if(enemy.health < 1) {
       enemy.color = "red";
     }
     if(enemy.health > 1) {
       enemy.color = "blue";
     }
+
     theEnemies.push(enemy);
   }
 }
