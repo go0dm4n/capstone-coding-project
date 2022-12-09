@@ -107,20 +107,20 @@ function spawnEnemies() {
   for(let i = 0; i < random(minEn, maxEn); i ++) {
     enemy = new Sprite(random(0, width), random(0, height));
 
-    if (enemy.x > width || enemy.y > height || enemy.y < 0 || enemy.x < 0) {
+    if (enemy.x  + enemy.width/2 > width || enemy.y + enemy.height/2 > height || enemy.y - enemy.height/2 < 0 || enemy.x - enemy.width/2 < 0) {
       enemy.remove()
     }
 
-    enemyxPos = Math.floor((enemy.x )/cellWidth);
+    enemyxPos = Math.floor((enemy.x - enemy.width/2)/cellWidth);
 
-    enemyyPos = Math.floor((enemy.y )/cellHeight);
+    enemyyPos = Math.floor((enemy.y - enemy.height/2)/cellHeight);
 
     enemyxPos2 = Math.floor((enemy.x + enemy.width/2)/cellWidth);
     
-    enemyyPos2 = Math.floor((enemy.y + enemy.height/2)/cellHeight);
+    enemyyPos2 = Math.floor((enemy.y)/cellHeight);
 
-    console.log(enemyxPos, enemyyPos)
-    if (room[enemyyPos][enemyxPos] === 1) {
+    console.log(enemyxPos, enemyyPos, enemyxPos2, enemyyPos2)
+    if (room[enemyyPos][enemyxPos] === 1 || room[enemyyPos2][enemyxPos] === 1 || room[enemyyPos][enemyxPos2] === 1 || room[enemyyPos2][enemyxPos2] === 1) {
       enemy.remove()
     }
 
