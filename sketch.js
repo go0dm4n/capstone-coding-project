@@ -111,9 +111,9 @@ function spawnEnemies() {
       enemy.remove()
     }
 
-    enemyxPos = Math.floor((enemy.x - (enemy.width/2))/cellWidth);
+    enemyxPos = Math.floor((enemy.x )/cellWidth);
 
-    enemyyPos = Math.floor((enemy.y - (enemy.height/2))/cellHeight);
+    enemyyPos = Math.floor((enemy.y )/cellHeight);
 
     enemyxPos2 = Math.floor((enemy.x + enemy.width/2)/cellWidth);
     
