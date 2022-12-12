@@ -27,6 +27,8 @@ const ROWS = 10
 let cellHeight;
 let cellWidth;
 
+let enemyWidth = 50;
+
 let xPos;
 let ypos;
 
@@ -34,6 +36,7 @@ let enemyxPos;
 let enemyyPos;
 let enemyxPos2;
 let enemyyPos2;
+
 
 function preload() {
   l1 = loadJSON("level grids/1-1.json")
@@ -59,6 +62,7 @@ function setup() {
 function draw() {
   background(220);
   moveCharacter();
+
   enemyKilled();
   checkCollide();
   pickupItems();
@@ -105,22 +109,23 @@ function mousePressed() {
 
 function spawnEnemies() {
   for(let i = 0; i < random(minEn, maxEn); i ++) {
-    enemy = new Sprite(random(0, width), random(0, height));
+    enemy = new Sprite(random(0 + enemyWidth, width - enemyWidth), random(0 + enemyWidth, height - enemyWidth));
 
-    if (enemy.x  + enemy.width/2 > width || enemy.y + enemy.height/2 > height || enemy.y - enemy.height/2 < 0 || enemy.x - enemy.width/2 < 0) {
+    enemy.xPos = Math.floor((enemy.x - enemy.width/2)/cellWidth);
+
+    enemy.yPos = Math.floor((enemy.y - enemy.height/2)/cellHeight);
+
+    enemy.xPos2 = Math.floor((enemy.x + enemy.width/2)/cellWidth);
+
+    enemy.yPos2 = Math.floor((enemy.y + enemy.height/2)/cellHeight);
+
+    enemy.speed = 1;
+
+    if(enemy.xPos < 0 || enemy.yPos < 0 || enemy.yPos2 > height || enemy.xPos2 > width) {
       enemy.remove()
     }
 
-    enemyxPos = Math.floor((enemy.x - enemy.width/2)/cellWidth);
-
-    enemyyPos = Math.floor((enemy.y - enemy.height/2)/cellHeight);
-
-    enemyxPos2 = Math.floor((enemy.x + enemy.width/2)/cellWidth);
-    
-    enemyyPos2 = Math.floor((enemy.y)/cellHeight);
-
-    console.log(enemyxPos, enemyyPos, enemyxPos2, enemyyPos2)
-    if (room[enemyyPos][enemyxPos] === 1 || room[enemyyPos2][enemyxPos] === 1 || room[enemyyPos][enemyxPos2] === 1 || room[enemyyPos2][enemyxPos2] === 1) {
+    if (room[enemy.yPos][enemy.xPos] === 1 || room[enemy.yPos2][enemy.xPos] === 1 || room[enemy.yPos][enemy.xPos2] === 1 || room[enemy.yPos2][enemy.xPos2] === 1) {
       enemy.remove()
     }
 
@@ -163,10 +168,9 @@ function checkCollide() {
   for(let i = theEnemies.length - 1; i >= 0; i--) {
     for(let k = theBullets.length - 1; k >= 0; k--) {
       if(theBullets[k].collides(player)) {
-        player.collider = "k";
       }
+
       else if (player.overlaps(theEnemies[i])){
-        player.collider = "k"
         player.health -= 1
         console.log(player.health)
         }
@@ -175,9 +179,7 @@ function checkCollide() {
 }
 
 function shootBullet() {
-  bullet = new Sprite(player.x + player.width, player.y);
-  bullet.collider = "k"
-  bullet.diameter = 10;
+  bullet = new Sprite(player.x + player.width, player.y, 10, "k");
   bullet.strength = 1;
 
   bullet.moveTowards(mouse, 10 / dist(bullet.x, bullet.y, mouseX, mouseY));
@@ -246,5 +248,12 @@ function changeTile(){
 }
 
 function moveEnemies() {
-
+  for(let i = theEnemies.length - 1; i >= 0; i--) {
+    if(room[theEnemies[i].yPos + 1][theEnemies[i].xPos] === 1) {
+      theEnemies[i].vel.x = theEnemies[i].speed
+    }
+    else {
+      theEnemies[i].vel.x = 0
+    }
+  }
 }
