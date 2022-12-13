@@ -67,6 +67,8 @@ function draw() {
   checkCollide();
   pickupItems();
   drawRoom();
+
+  moveEnemies()
 }
 
 function moveCharacter(){
@@ -139,6 +141,8 @@ function spawnEnemies() {
       enemy.color = "blue";
     }
 
+    enemy.vel.x = 0
+    enemy.vel.y = 0
     theEnemies.push(enemy);
   }
 }
@@ -247,12 +251,32 @@ function changeTile(){
   }   
 }
 
-function moveEnemies() {
+async function moveEnemies() {
   for(let i = theEnemies.length - 1; i >= 0; i--) {
-    if(room[theEnemies[i].yPos + 1][theEnemies[i].xPos] === 1) {
-      theEnemies[i].vel.x = theEnemies[i].speed
+
+    theEnemies[i].xPos = Math.floor((theEnemies[i].x - theEnemies[i].width/2)/cellWidth); //left
+
+    theEnemies[i].yPos = Math.floor((theEnemies[i].y - theEnemies[i].height/2)/cellHeight); // top
+
+    theEnemies[i].xPos2 = Math.floor((theEnemies[i].x + theEnemies[i].width/2)/cellWidth); // right
+
+    theEnemies[i].yPos2 = Math.floor((theEnemies[i].y + theEnemies[i].height/2)/cellHeight); // bottom
+
+    if(room[theEnemies[i].yPos][theEnemies[i].xPos] !== 1 && room[theEnemies[i].yPos2][theEnemies[i].xPos] !== 1 && room[theEnemies[i].yPos][theEnemies[i].xPos2] !== 1 && room[theEnemies[i].yPos2][theEnemies[i].xPos2] !== 1) {
+      if (theEnemies[i].xPos >= 0 && theEnemies[i].xPos2 <= COLS && theEnemies[i].yPos >= 0 && theEnemies[i].yPos2 <= ROWS)
+
+      if(room[theEnemies[i].yPos - 1][theEnemies[i].xPos] === 1 || room[theEnemies[i].yPos2 + 1][theEnemies[i].xPos] === 1) { // wall below or above
+
+        if(random(0,100) > 50) {
+          theEnemies[i].vel.y = 1
+        }
+        else {
+          theEnemies[i].vel.y = -1
+        }
+      }
     }
     else {
+      theEnemies[i].vel.y = 0
       theEnemies[i].vel.x = 0
     }
   }
