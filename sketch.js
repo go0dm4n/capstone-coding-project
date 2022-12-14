@@ -265,19 +265,23 @@ async function moveEnemies() {
     if(room[theEnemies[i].yPos][theEnemies[i].xPos] !== 1 && room[theEnemies[i].yPos2][theEnemies[i].xPos] !== 1 && room[theEnemies[i].yPos][theEnemies[i].xPos2] !== 1 && room[theEnemies[i].yPos2][theEnemies[i].xPos2] !== 1) {
       if (theEnemies[i].xPos >= 0 && theEnemies[i].xPos2 <= COLS && theEnemies[i].yPos >= 0 && theEnemies[i].yPos2 <= ROWS)
 
-      if(room[theEnemies[i].yPos - 1][theEnemies[i].xPos] === 1 || room[theEnemies[i].yPos2 + 1][theEnemies[i].xPos] === 1) { // wall below or above
+      if(wallAbove(theEnemies[i].xPos, theEnemies[i].yPos, theEnemies[i].xPos2, theEnemies[i].yPos2)) { // wall below or above
 
         if(random(0,100) > 50) {
-          theEnemies[i].vel.y = 1
+          theEnemies[i].vel.x = 1
         }
         else {
-          theEnemies[i].vel.y = -1
+          theEnemies[i].vel.x = -1
         }
       }
     }
-    else {
-      theEnemies[i].vel.y = 0
-      theEnemies[i].vel.x = 0
+      else {
+        theEnemies[i].vel.y = 0;
+        theEnemies[i].vel.x = 0;
     }
   }
+}
+
+function wallAbove(left, top, right, bottom) {
+  return room[top][right] === 1 || room[bottom][right] === 1;
 }
