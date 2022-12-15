@@ -69,6 +69,7 @@ function draw() {
   drawRoom();
 
   moveEnemies()
+  trackBullet();
 }
 
 function moveCharacter(){
@@ -105,8 +106,7 @@ function moveCharacter(){
 
 function mousePressed() {
   shootBullet();
-  trackBullet();
-  changeTile();
+  // changeTile();
 }
 
 function spawnEnemies() {
@@ -152,7 +152,7 @@ function enemyKilled() {
     for(let k = theBullets.length - 1; k >= 0; k--) {
       if (theEnemies[i].overlaps(theBullets[k])) {
         theEnemies[i].health -= theBullets[k].strength;
-        
+        console.log("ow")
         theBullets[k].remove();
         theBullets.splice(k, 1);
 
@@ -193,13 +193,12 @@ function shootBullet() {
 function trackBullet() {
   for(let i = theBullets.length - 1; i >= 0; i--) {
     if(theBullets[i].x > width || theBullets[i].x < 0 || theBullets[i].y > height || theBullets[i].y < 0) {
-      theBullets[i].remove();
       theBullets.splice(i, 1);
+      theBullets[i].remove();
     }
-    
-    bulletxPos = Math.floor(theBullets[i].x/cellWidth);
-    bulletyPos = Math.floor(theBullets[i].y/cellHeight);
-    if(room[bulletyPos][bulletxPos] === 1) {
+    bullet.xPos = Math.floor(theBullets[i].x/cellWidth);
+    bullet.yPos = Math.floor(theBullets[i].y/cellHeight);
+    if(room[bullet.yPos][bullet.xPos] === 1) {
       theBullets[i].remove();
       theBullets.splice(i, 1);
     }
