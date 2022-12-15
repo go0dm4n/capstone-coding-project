@@ -191,11 +191,12 @@ function shootBullet() {
 }
 
 function trackBullet() {
-  for(let i = theBullets.length; i >= 0; i--) {
+  for(let i = theBullets.length - 1; i >= 0; i--) {
     if(theBullets[i].x > width || theBullets[i].x < 0 || theBullets[i].y > height || theBullets[i].y < 0) {
       theBullets[i].remove();
       theBullets.splice(i, 1);
     }
+    
     bulletxPos = Math.floor(theBullets[i].x/cellWidth);
     bulletyPos = Math.floor(theBullets[i].y/cellHeight);
     if(room[bulletyPos][bulletxPos] === 1) {
@@ -283,5 +284,5 @@ async function moveEnemies() {
 }
 
 function wallAbove(left, top, right, bottom) {
-  return room[top][right] === 1 || room[bottom][right] === 1;
+  return room[top][right] === 1 || room[bottom][right] === 1 || room[bottom][left] === 1 || room[top][left] === 1;; 
 }
