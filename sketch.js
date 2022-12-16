@@ -51,10 +51,10 @@ function setup() {
 
   player = new Sprite();
   player.health = 6;
-  player.collider = "k"
+  player.collider = "k";
 
   // makeRoom();
-  room = l1
+  room = l1;
   spawnEnemies();
 }
 
@@ -150,7 +150,6 @@ function spawnEnemies() {
 function enemyKilled() {
   for(let i = theEnemies.length - 1; i >= 0; i--) {
     for(let k = theBullets.length - 1; k >= 0; k--) {
-      console.log(theBullets[k].overlaps(player))
       if (theBullets[k].overlaps(theEnemies[i])) {
         theEnemies[i].health -= theBullets[k].strength;
         theBullets[k].remove();
@@ -176,16 +175,14 @@ function checkCollide() {
 
       else if (player.overlaps(theEnemies[i])){
         player.health -= 1
-        console.log(player.health)
         }
     }
   }
 }
 
 function shootBullet() {
-  bullet = new Sprite(player.x + player.width, player.y, 10, "d");
+  bullet = new Sprite(player.x + player.width, player.y, 10, "k");
   bullet.strength = 1;
-
   bullet.moveTowards(mouse, 10 / dist(bullet.x, bullet.y, mouseX, mouseY));
   theBullets.push(bullet);
 }
@@ -207,7 +204,7 @@ function trackBullet() {
 
 function pickupItems() {
   for (let i = theCoins.length - 1; i >= 0; i --){
-    if(player.overlaps(theCoins[i])) {
+    if(theCoins[i].overlaps(player)) {
       theCoins[i].remove;
       theCoins.splice(i,1);
       money += 1;
@@ -273,6 +270,9 @@ function moveEnemies() {
           else if (player.x / theEnemies[i].x < 1) { // enemy is right of player
             theEnemies[i].vel.x = -1; // move left
           }
+          if (player.y === theEnemies[i].y) { // enemy is same y as player
+            theEnemies[i].vel.y = 1; // move right
+          }
         }
 
         else if(wallRight(theEnemies[i].xPos, theEnemies[i].yPos, theEnemies[i].xPos2, theEnemies[i].yPos2)) { // wall below or above
@@ -282,6 +282,9 @@ function moveEnemies() {
           else if (player.y / theEnemies[i].y < 1) { // enemy is below player
             theEnemies[i].vel.y = -1; // move up
             }
+          if (player.x === theEnemies[i].x) { // enemy is same x as player
+            theEnemies[i].vel.x = 1; // move right
+          }
         }
 
         else { //no walls nearby, free movement
