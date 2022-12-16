@@ -183,7 +183,7 @@ function checkCollide() {
 }
 
 function shootBullet() {
-  bullet = new Sprite(player.x + player.width, player.y, 10, "k");
+  bullet = new Sprite(player.x + player.width, player.y, 10, "d");
   bullet.strength = 1;
 
   bullet.moveTowards(mouse, 10 / dist(bullet.x, bullet.y, mouseX, mouseY));
