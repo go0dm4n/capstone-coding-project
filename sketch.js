@@ -21,8 +21,8 @@ let money = 0;
 let speed = 3;
 let bulletspeed = 5
 
-const COLS = 20
-const ROWS = 10
+const COLS = 40
+const ROWS = 20
 
 let cellHeight;
 let cellWidth;
@@ -150,16 +150,16 @@ function spawnEnemies() {
 function enemyKilled() {
   for(let i = theEnemies.length - 1; i >= 0; i--) {
     for(let k = theBullets.length - 1; k >= 0; k--) {
-      if (theEnemies[i].overlaps(theBullets[k])) {
+      console.log(theBullets[k].overlaps(player))
+      if (theBullets[k].overlaps(theEnemies[i])) {
         theEnemies[i].health -= theBullets[k].strength;
-        console.log("ow")
         theBullets[k].remove();
         theBullets.splice(k, 1);
 
         if(theEnemies[i].health <= 0) {
           theEnemies[i].remove();
           coin = new Sprite(theEnemies[i].x, theEnemies[i].y, 30);
-          coin.collider = "none";
+          coin.collider = "k";
           coin.color = 'yellow';
           theCoins.push(coin);
         }    
@@ -251,37 +251,72 @@ function changeTile(){
   }   
 }
 
-async function moveEnemies() {
+function moveEnemies() {
   for(let i = theEnemies.length - 1; i >= 0; i--) {
 
-    theEnemies[i].xPos = Math.floor((theEnemies[i].x - theEnemies[i].width/2)/cellWidth); //left
+    theEnemies[i].xPos = Math.floor((theEnemies[i].x - theEnemies[i].width/2)/cellWidth); // left of enemy
 
-    theEnemies[i].yPos = Math.floor((theEnemies[i].y - theEnemies[i].height/2)/cellHeight); // top
+    theEnemies[i].yPos = Math.floor((theEnemies[i].y - theEnemies[i].height/2)/cellHeight); // top of enemy
 
-    theEnemies[i].xPos2 = Math.floor((theEnemies[i].x + theEnemies[i].width/2)/cellWidth); // right
+    theEnemies[i].xPos2 = Math.floor((theEnemies[i].x + theEnemies[i].width/2)/cellWidth); // right of enemy
 
-    theEnemies[i].yPos2 = Math.floor((theEnemies[i].y + theEnemies[i].height/2)/cellHeight); // bottom
+    theEnemies[i].yPos2 = Math.floor((theEnemies[i].y + theEnemies[i].height/2)/cellHeight); // bottom of enemy
 
-    if(room[theEnemies[i].yPos][theEnemies[i].xPos] !== 1 && room[theEnemies[i].yPos2][theEnemies[i].xPos] !== 1 && room[theEnemies[i].yPos][theEnemies[i].xPos2] !== 1 && room[theEnemies[i].yPos2][theEnemies[i].xPos2] !== 1) {
-      if (theEnemies[i].xPos >= 0 && theEnemies[i].xPos2 <= COLS && theEnemies[i].yPos >= 0 && theEnemies[i].yPos2 <= ROWS)
+    if(touchingWall(theEnemies[i].xPos, theEnemies[i].yPos, theEnemies[i].xPos2, theEnemies[i].yPos2)) { // if not touching wall
 
-      if(wallAbove(theEnemies[i].xPos, theEnemies[i].yPos, theEnemies[i].xPos2, theEnemies[i].yPos2)) { // wall below or above
+      if (theEnemies[i].xPos >= 0 && theEnemies[i].xPos2 <= COLS && theEnemies[i].yPos >= 0 && theEnemies[i].yPos2 <= ROWS){ // in boundaries 
 
-        if(random(0,100) > 50) {
-          theEnemies[i].vel.x = 1
+        if(wallAbove(theEnemies[i].xPos, theEnemies[i].yPos, theEnemies[i].xPos2, theEnemies[i].yPos2)) { // wall below or above
+          theEnemies[i].vel.y = 0
+          if (player.x / theEnemies[i].x > 1) { // enemy is left of player
+            theEnemies[i].vel.x = 1 // move right
+          }
+          else if (player.x / theEnemies[i].x < 1) { // enemy is right of player
+            theEnemies[i].vel.x = -1; // move left
+          }
         }
-        else {
-          theEnemies[i].vel.x = -1
+
+        else if(wallRight(theEnemies[i].xPos, theEnemies[i].yPos, theEnemies[i].xPos2, theEnemies[i].yPos2)) { // wall below or above
+          theEnemies[i].vel.x = 0
+          if (player.y / theEnemies[i].y > 1) { // enemy is above player
+            theEnemies[i].vel.y = 1 // move down
+            }
+          else if (player.y / theEnemies[i].y < 1) { // enemy is below player
+            theEnemies[i].vel.y = -1; // move up
+            }
+        }
+
+        else { //no walls nearby, free movement
+          if (player.x / theEnemies[i].x > 1) { // enemy is left of player
+            theEnemies[i].vel.x = 1 // move right
+          }
+          else if (player.x / theEnemies[i].x < 1) { // enemy is right of player
+            theEnemies[i].vel.x = -1; // move left
+          }
+          if (player.y / theEnemies[i].y > 1) { // enemy is above player
+            theEnemies[i].vel.y = 1 // move down
+          }
+          else if (player.y / theEnemies[i].y < 1) { // enemy is below player
+            theEnemies[i].vel.y = -1; // move up
+          }
         }
       }
     }
-      else {
-        theEnemies[i].vel.y = 0;
-        theEnemies[i].vel.x = 0;
+    else { // touching a wall
+      theEnemies[i].vel.x = 0
+      theEnemies[i].vel.y = 0
     }
   }
 }
 
 function wallAbove(left, top, right, bottom) {
-  return room[top][right] === 1 || room[bottom][right] === 1 || room[bottom][left] === 1 || room[top][left] === 1;; 
+  return room[top - 1][right] === 1 || room[bottom + 1][right] === 1 || room[bottom + 1][left] === 1 || room[top - 1][left] === 1;
+}
+
+function wallRight(left, top, right, bottom) {
+  return room[top][right + 1] === 1 || room[bottom][right + 1] === 1 || room[bottom][left - 1] === 1 || room[top][left - 1] === 1;
+}
+
+function touchingWall(left, top, right, bottom) {
+  return room[top][left] !== 1 && room[bottom][left] !== 1 && room[top][right] !== 1 && room[bottom][right] !== 1;
 }
