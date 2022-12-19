@@ -150,11 +150,12 @@ function spawnEnemies() {
 function enemyKilled() {
   for(let i = theEnemies.length - 1; i >= 0; i--) {
     for(let k = theBullets.length - 1; k >= 0; k--) {
+      console.log(theBullets[k].overlaps(theEnemies[i]))
       if (theBullets[k].overlaps(theEnemies[i])) {
         theEnemies[i].health -= theBullets[k].strength;
         theBullets[k].remove();
         theBullets.splice(k, 1);
-
+        
         if(theEnemies[i].health <= 0) {
           theEnemies[i].remove();
           coin = new Sprite(theEnemies[i].x, theEnemies[i].y, 30);
@@ -170,7 +171,7 @@ function enemyKilled() {
 function checkCollide() {
   for(let i = theEnemies.length - 1; i >= 0; i--) {
     for(let k = theBullets.length - 1; k >= 0; k--) {
-      if(theBullets[k].collides(player)) {
+      if(theBullets[k].overlaps(player)) {
       }
 
       else if (player.overlaps(theEnemies[i])){
@@ -264,7 +265,7 @@ function moveEnemies() {
       if (theEnemies[i].xPos >= 0 && theEnemies[i].xPos2 <= COLS && theEnemies[i].yPos >= 0 && theEnemies[i].yPos2 <= ROWS){ // in boundaries 
 
         if(wallAbove(theEnemies[i].xPos, theEnemies[i].yPos, theEnemies[i].xPos2, theEnemies[i].yPos2)) { // wall below or above
-          if (player.x / theEnemies[i].x > 1) { // enemy is left of player
+          if (player.x / theEnemies[i].x > 1 ) { // enemy is left of player
             theEnemies[i].vel.x = 1 // move right
           }
           else if (player.x / theEnemies[i].x < 1) { // enemy is right of player
