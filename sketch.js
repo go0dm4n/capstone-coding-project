@@ -12,7 +12,9 @@ let theBullets = [];
 let theEnemies = [];
 let yourBullets = [];
 let theCoins = [];
+let map = [[0,0,0]]
 
+let l0, l1, l2, l3;
 
 let minEn = 1
 let maxEn = 6
@@ -39,8 +41,13 @@ let enemyyPos2;
 
 
 function preload() {
+  l0 = loadJSON("level grids/1-0.json")
   l1 = loadJSON("level grids/1-1.json")
+  l2 = loadJSON("level grids/1-2.json")
+  l3 = loadJSON("level grids/1-2.json")
 }
+
+let theLevels1 = [l0, l1, l2, l3]
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -54,18 +61,34 @@ function setup() {
   player.collider = "k";
 
   // makeRoom();
-  room = l1;
-  spawnEnemies();
+  room = l0;
+  // spawnEnemies();
+  makeMap(theLevels1)
 }
 
+function makeMap(array) {
+  let n;
+  for(let i = 0; i <= 9; i++) {
+     n = Math.floor(random(0, array.length - 1))
+    if(random(0, 100) > 67) {
+      map.push(array[n])
+      array.splice(n, 1)
+    }
+    else {
+      map.push(0)
+    }
+  }
+  console.log(map)
+}
 
 function draw() {
   background(220);
+
   moveCharacter();
 
   enemyKilled();
   checkCollide();
-  pickupItems();
+  // pickupItems();
   drawRoom();
 
   moveEnemies()
@@ -150,7 +173,7 @@ function spawnEnemies() {
 function enemyKilled() {
   for(let i = theEnemies.length - 1; i >= 0; i--) {
     for(let k = theBullets.length - 1; k >= 0; k--) {
-      console.log(theBullets[k].overlaps(theEnemies[i]))
+      console.log(theBullets[k].overlaps(player))
       if (theBullets[k].overlaps(theEnemies[i])) {
         theEnemies[i].health -= theBullets[k].strength;
         theBullets[k].remove();
