@@ -12,7 +12,9 @@ let theBullets = [];
 let theEnemies = [];
 let yourBullets = [];
 let theCoins = [];
-let map = [[0,0,0]]
+let map = [[0,0,0], 
+           [0,0,0],
+           [0,0,0]]
 
 let l0, l1, l2, l3;
 
@@ -45,9 +47,10 @@ function preload() {
   l1 = loadJSON("level grids/1-1.json")
   l2 = loadJSON("level grids/1-2.json")
   l3 = loadJSON("level grids/1-2.json")
+  theLevels1 = [l0, l1, l2, l3]
 }
 
-let theLevels1 = [l0, l1, l2, l3]
+let theLevels1;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -68,17 +71,48 @@ function setup() {
 
 function makeMap(array) {
   let n;
-  for(let i = 0; i <= 9; i++) {
+  for(let i = map.length - 1; i > 0; i--) {
+    for(let k = map[i].length - 1; k > 0; k--) {
      n = Math.floor(random(0, array.length - 1))
-    if(random(0, 100) > 67) {
-      map.push(array[n])
-      array.splice(n, 1)
-    }
-    else {
-      map.push(0)
+      if(random(0, 100) < 67) {
+        map[i].splice(k, 1)
+        map[i].push(array[n])
+        array.splice(n, 1)
+        }
     }
   }
-  console.log(map)
+  for(let i = map.length - 1; i >= 0; i--) {
+    for(let k = map[i].length - 1; k >= 0; k--) {
+      if(map[i][k] !== 0) { // if it's a room
+          if(map[i-1][k] && i > 0){ // room above
+            map[i][k][ROWS - 1][17] = 0
+            map[i][k][ROWS - 1][18] = 0
+            map[i][k][ROWS - 1][19] = 0
+            map[i][k][ROWS - 1][20] = 0
+            map[i][k][ROWS - 1][21] = 0
+            map[i][k][ROWS - 1][22] = 0
+          } 
+
+          // if(map[i+1][k] && i < map[i].length - 1){ // room below
+
+          // }
+
+          if(map[i][k-1] && i > 0){ // room left
+            map[i][k][7][0] = 0
+            map[i][k][8][0] = 0
+            map[i][k][9][0] = 0
+            map[i][k][10][0] = 0
+            map[i][k][11][0] = 0
+            map[i][k][12][0] = 0
+          } 
+
+          // if(map[i][k + 1] && i < map.length - 1){ // room right
+
+          // } 
+
+        }
+    }
+  }
 }
 
 function draw() {
