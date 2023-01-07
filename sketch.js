@@ -23,7 +23,6 @@ let maxEn = 6
 let money = 0;
 
 let speed = 3;
-let bulletspeed = 5
 
 const COLS = 40
 const ROWS = 20
@@ -41,6 +40,8 @@ let enemyyPos;
 let enemyxPos2;
 let enemyyPos2;
 
+let mapX = 0;
+let mapY = 0;
 
 function preload() {
   l0 = loadJSON("level grids/1-0.json")
@@ -77,27 +78,33 @@ function makeMap(array) {
       if(random(0, 100) < 67) {
         map[i].splice(k, 1)
         map[i].push(array[n])
-        array.splice(n, 1)
+        array.splice(n, 1) // removes level from list of addable levels
         }
     }
   }
+
   for(let i = map.length - 1; i >= 0; i--) {
     for(let k = map[i].length - 1; k >= 0; k--) {
       if(map[i][k] !== 0) { // if it's a room
-          if(map[i-1][k] && i > 0){ // room above
+          if(i > 0 && map[i-1][k] ){ // room above
+            map[i][k][0][17] = 0
+            map[i][k][0][18] = 0
+            map[i][k][0][19] = 0
+            map[i][k][0][20] = 0
+            map[i][k][0][21] = 0
+            map[i][k][0][22] = 0
+          } 
+
+          if(i < map.length - 1 && map[i+1][k]){ // room below
             map[i][k][ROWS - 1][17] = 0
             map[i][k][ROWS - 1][18] = 0
             map[i][k][ROWS - 1][19] = 0
             map[i][k][ROWS - 1][20] = 0
             map[i][k][ROWS - 1][21] = 0
             map[i][k][ROWS - 1][22] = 0
-          } 
+          }
 
-          // if(map[i+1][k] && i < map[i].length - 1){ // room below
-
-          // }
-
-          if(map[i][k-1] && i > 0){ // room left
+          if(i > 0 && map[i][k-1]){ // room left
             map[i][k][7][0] = 0
             map[i][k][8][0] = 0
             map[i][k][9][0] = 0
@@ -106,10 +113,14 @@ function makeMap(array) {
             map[i][k][12][0] = 0
           } 
 
-          // if(map[i][k + 1] && i < map.length - 1){ // room right
-
-          // } 
-
+          if(i < map[i].length - 1 && map[i][k+1]){ // room right
+            map[i][k][7][COLS - 1] = 0
+            map[i][k][8][COLS - 1] = 0
+            map[i][k][9][COLS - 1] = 0
+            map[i][k][10][COLS - 1] = 0
+            map[i][k][11][COLS - 1] = 0
+            map[i][k][12][COLS - 1] = 0
+          } 
         }
     }
   }
@@ -120,7 +131,9 @@ function draw() {
 
   moveCharacter();
 
+  mapX, mapY = mapPosition()
   enemyKilled();
+
   checkCollide();
   // pickupItems();
   drawRoom();
@@ -136,28 +149,37 @@ function moveCharacter(){
   playerxPos2 = Math.floor((player.x + player.width/2)/cellWidth);
   playeryPos2 = Math.floor((player.y + player.height/2)/cellHeight);
 
-  if(room[playeryPos][playerxPos] === 1 || room[playeryPos2][playerxPos] === 1 || room[playeryPos][playerxPos2] === 1 || room[playeryPos2][playerxPos2] === 1) {
-    player.x -= player.vel.x
-    player.y -= player.vel.y
+  if(player.y + player.height/2 <= height && player.y -player.height/2 >= 0) {
+    if(room[playeryPos][playerxPos] === 1 || room[playeryPos2][playerxPos] === 1 || room[playeryPos][playerxPos2] === 1 || room[playeryPos2][playerxPos2] === 1) { // if touching wall
+      player.x -= player.vel.x
+      player.y -= player.vel.y
+    }
   }
 
   if (kb.pressing('W')) { //up
     player.vel.y = -speed;
   }
+
   if (kb.pressing('A')) { //left
     player.vel.x = -speed;
   }
+
   if (kb.pressing('S')) { //down
     player.vel.y = speed;
   }
+
   if (kb.pressing('D')) { //right
     player.vel.x = speed;
   }
-  if (!keyIsPressed) {
+
+  if (!keyIsPressed) { // dont move if nothing is pressed
     player.vel.x = 0;
     player.vel.y = 0;
   }
 
+  if(player.x >= width || player.x <= 0 || player.y >= height || player.y <= 0) {
+    changeRoom()
+  }
 
 }
 
@@ -241,19 +263,23 @@ function checkCollide() {
 function shootBullet() {
   bullet = new Sprite(player.x + player.width, player.y, 10, "k");
   bullet.strength = 1;
-  bullet.moveTowards(mouse, 10 / dist(bullet.x, bullet.y, mouseX, mouseY));
+  bullet.speed = 10
+  bullet.moveTowards(mouse, bullet.speed / dist(bullet.x, bullet.y, mouseX, mouseY)); // dividing by distance from mouse to keep speed constant
   theBullets.push(bullet);
 }
 
-function trackBullet() {
+function trackBullet() { // bullet deletion
   for(let i = theBullets.length - 1; i >= 0; i--) {
-    if(theBullets[i].x > width || theBullets[i].x < 0 || theBullets[i].y > height || theBullets[i].y < 0) {
+
+    bullet.xPos = Math.floor(theBullets[i].x/cellWidth);
+    bullet.yPos = Math.floor(theBullets[i].y/cellHeight);
+
+    if(theBullets[i].x > width || theBullets[i].x < 0 || theBullets[i].y > height || theBullets[i].y < 0) { // if bullet goes out of bounds
       theBullets.splice(i, 1);
       theBullets[i].remove();
     }
-    bullet.xPos = Math.floor(theBullets[i].x/cellWidth);
-    bullet.yPos = Math.floor(theBullets[i].y/cellHeight);
-    if(room[bullet.yPos][bullet.xPos] === 1) {
+
+    if(room[bullet.yPos][bullet.xPos] === 1) { // if bullet hits wall
       theBullets[i].remove();
       theBullets.splice(i, 1);
     }
@@ -267,6 +293,16 @@ function pickupItems() {
       theCoins.splice(i,1);
       money += 1;
     }
+
+  }
+}
+
+function makeRoom() {
+  for (let i = 0; i < ROWS; i++) {
+    room.push([]);
+    for (let k = 0; k < COLS; k++) {
+      room[i].push(0);
+    }
   }
 }
 
@@ -278,21 +314,15 @@ function drawRoom() {
       if (room[i][k] === 0) {
         fill("white");
       }
+
       if (room[i][k] === 1) {
         fill("black");
       }   
       rect(k * cellWidth, i * cellHeight, cellWidth, cellHeight); 
-    }
-  }
-}
 
-function makeRoom() {
-  for (let i = 0; i < ROWS; i++) {
-    room.push([]);
-    for (let k = 0; k < COLS; k++) {
-      room[i].push(0);
     }
   }
+
 }
 
 function changeTile(){
@@ -378,4 +408,42 @@ function wallRight(left, top, right, bottom) {
 
 function touchingWall(left, top, right, bottom) {
   return room[top][left] !== 1 && room[bottom][left] !== 1 && room[top][right] !== 1 && room[bottom][right] !== 1;
+}
+
+function mapPosition() {
+  mapY = -1
+  for (let i = 0; i <= map.length; i++) {
+    mapY++
+    mapX = -1
+    for (let k = 0; k <= map[i].length; k++) {
+      mapX++
+      if(map[i][k] === room) {
+        return mapX, mapY;
+      }
+    }
+  }
+}
+
+function changeRoom() {
+
+  if (player.x >= width) { // right
+    room = map[mapY][mapX + 1]
+    console.log(room, "right")
+  }
+
+  if (player.x <= 0) { // left
+    room = map[mapY][mapX - 1]
+    console.log(room, "left")
+  }
+
+  if (player.y >= height) { // down
+    room = map[mapY + 1][mapX]
+    console.log(room, "down")
+  }
+
+  if (player.y <= 0) { // up
+    room = map[mapY - 1][mapX]
+    console.log(room, "up")
+  }
+
 }
