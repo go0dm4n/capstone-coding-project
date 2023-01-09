@@ -64,9 +64,9 @@ function setup() {
   cellWidth = width / COLS;
   cellHeight = height / ROWS;
 
-  player = new Sprite();
+  player = new Sprite(width/2, height/2);
+  player.collider = "d"
   player.health = 6;
-  player.collider = "k";
 
   // makeRoom();
   room = l0;
@@ -139,7 +139,7 @@ function draw() {
   enemyKilled();
 
   checkCollide();
-  // pickupItems();
+  pickupItems();
   drawRoom();
 
   moveEnemies()
@@ -196,7 +196,7 @@ function mousePressed() {
 
 function spawnEnemies() {
   for(let i = 0; i < random(minEn, maxEn); i ++) {
-    enemy = new Sprite(random(0 + enemyWidth, width - enemyWidth), random(0 + enemyWidth, height - enemyWidth));
+    enemy = new Sprite(random(0 + enemyWidth, width - enemyWidth), random(0 + enemyWidth, height - enemyWidth),"d");
 
     enemy.xPos = Math.floor((enemy.x - enemy.width/2)/cellWidth);
 
@@ -217,7 +217,6 @@ function spawnEnemies() {
     }
 
     enemy.health = (random(0, 2));
-    enemy.collider = "k";
 
     if(enemy.health < 1) {
       enemy.color = "red";
@@ -241,9 +240,9 @@ function enemyKilled() {
         theBullets.splice(k, 1);
         
         if(theEnemies[i].health <= 0) {
-          theEnemies[i].remove();
           coin = new Sprite(theEnemies[i].x, theEnemies[i].y, 30);
-          coin.collider = "k";
+          theEnemies[i].remove();
+          coin.collider = "d";
           coin.color = 'yellow';
           theCoins.push(coin);
         }    
@@ -266,7 +265,8 @@ function checkCollide() {
 }
 
 function shootBullet() {
-  bullet = new Sprite(player.x + player.width, player.y, 10, "k");
+  bullet = new Sprite(player.x + player.width, player.y, 10);
+  bullet.collider = "k"
   bullet.strength = 1;
   bullet.speed = 10
   bullet.moveTowards(mouse, bullet.speed / dist(bullet.x, bullet.y, mouseX, mouseY)); // dividing by distance from mouse to keep speed constant
@@ -293,8 +293,8 @@ function trackBullet() { // bullet deletion
 
 function pickupItems() {
   for (let i = theCoins.length - 1; i >= 0; i --){
-    if(theCoins[i].overlaps(player)) {
-      theCoins[i].remove;
+    if(player.collides(theCoins[i])) {
+      theCoins[i].remove();
       theCoins.splice(i,1);
       money += 1;
     }
@@ -464,13 +464,14 @@ function newRoom() {
 }
 
 function blockade(room) {
+  newroom = room
   for (let i = 19; i >= 0; i--){
     for (let k = room[i].length - 1; k >= 0; k--){
       if (i === 0){
-        room[i][k] = 1
+        newroom[i][k] = 1
       }
       if (k === 0){
-        room[i][k] = 1
+        newroom[i][k] = 1
       }
     }
   }
