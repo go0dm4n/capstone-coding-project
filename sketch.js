@@ -12,11 +12,15 @@ let theBullets = [];
 let theEnemies = [];
 let yourBullets = [];
 let theCoins = [];
-let map = [[0,0,0], 
-           [0,0,0],
-           [0,0,0]]
+let map = [[0,0,0,0], 
+           [0,0,0,0],
+           [0,0,0,0]]
 
-let l0, l1, l2, l3;
+let l0, l1, l2, l3, l4;
+
+let time;
+
+let newr = false;
 
 let minEn = 1
 let maxEn = 6
@@ -47,15 +51,15 @@ function preload() {
   l0 = loadJSON("level grids/1-0.json")
   l1 = loadJSON("level grids/1-1.json")
   l2 = loadJSON("level grids/1-2.json")
-  l3 = loadJSON("level grids/1-2.json")
-  theLevels1 = [l0, l1, l2, l3]
+  l3 = loadJSON("level grids/1-3.json")
+  l4 = loadJSON("level grids/1-4.json")
+  theLevels1 = [l0, l1, l2, l3, l4]
 }
 
 let theLevels1;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-
 
   cellWidth = width / COLS;
   cellHeight = height / ROWS;
@@ -72,12 +76,12 @@ function setup() {
 
 function makeMap(array) {
   let n;
-  for(let i = map.length - 1; i > 0; i--) {
-    for(let k = map[i].length - 1; k > 0; k--) {
+  for(let i = map.length - 1; i >= 0; i--) {
+    for(let k = map[i].length - 1; k >= 0; k--) {
      n = Math.floor(random(0, array.length - 1))
-      if(random(0, 100) < 67) {
-        map[i].splice(k, 1)
-        map[i].push(array[n])
+      if(random(0, 100) < 80 && array.length > 0) {
+        map[i][k] = array[n] // replace 0 in map with level
+        array[n].complete = false
         array.splice(n, 1) // removes level from list of addable levels
         }
     }
@@ -86,40 +90,40 @@ function makeMap(array) {
   for(let i = map.length - 1; i >= 0; i--) {
     for(let k = map[i].length - 1; k >= 0; k--) {
       if(map[i][k] !== 0) { // if it's a room
-          if(i > 0 && map[i-1][k] ){ // room above
-            map[i][k][0][17] = 0
-            map[i][k][0][18] = 0
-            map[i][k][0][19] = 0
-            map[i][k][0][20] = 0
-            map[i][k][0][21] = 0
-            map[i][k][0][22] = 0
+          if(i > 0 && map[i-1][k] ){ // open top door if theres a room above
+            map[i][k][0][map[i][k][0].length/2 - 3] = 0
+            map[i][k][0][map[i][k][0].length/2 - 2] = 0
+            map[i][k][0][map[i][k][0].length/2 - 1] = 0
+            map[i][k][0][map[i][k][0].length/2] = 0
+            map[i][k][0][map[i][k][0].length/2 + 1] = 0
+            map[i][k][0][map[i][k][0].length/2 + 2] = 0
           } 
 
           if(i < map.length - 1 && map[i+1][k]){ // room below
-            map[i][k][ROWS - 1][17] = 0
-            map[i][k][ROWS - 1][18] = 0
-            map[i][k][ROWS - 1][19] = 0
-            map[i][k][ROWS - 1][20] = 0
-            map[i][k][ROWS - 1][21] = 0
-            map[i][k][ROWS - 1][22] = 0
+            map[i][k][ROWS - 1][map[i][k][0].length/2 - 3] = 0
+            map[i][k][ROWS - 1][map[i][k][0].length/2 - 2] = 0
+            map[i][k][ROWS - 1][map[i][k][0].length/2 - 1] = 0
+            map[i][k][ROWS - 1][map[i][k][0].length/2] = 0
+            map[i][k][ROWS - 1][map[i][k][0].length/2 + 1] = 0
+            map[i][k][ROWS - 1][map[i][k][0].length/2 + 2] = 0
           }
 
           if(i > 0 && map[i][k-1]){ // room left
-            map[i][k][7][0] = 0
-            map[i][k][8][0] = 0
-            map[i][k][9][0] = 0
-            map[i][k][10][0] = 0
-            map[i][k][11][0] = 0
-            map[i][k][12][0] = 0
+            map[i][k][map[i][k][0].length/4 - 3][0] = 0
+            map[i][k][map[i][k][0].length/4 - 2][0] = 0
+            map[i][k][map[i][k][0].length/4 - 1][0] = 0
+            map[i][k][map[i][k][0].length/4][0] = 0
+            map[i][k][map[i][k][0].length/4 + 1][0] = 0
+            map[i][k][map[i][k][0].length/4 + 2][0] = 0
           } 
 
           if(i < map[i].length - 1 && map[i][k+1]){ // room right
-            map[i][k][7][COLS - 1] = 0
-            map[i][k][8][COLS - 1] = 0
-            map[i][k][9][COLS - 1] = 0
-            map[i][k][10][COLS - 1] = 0
-            map[i][k][11][COLS - 1] = 0
-            map[i][k][12][COLS - 1] = 0
+            map[i][k][map[i][k][0].length/4 - 3][COLS - 1] = 0
+            map[i][k][map[i][k][0].length/4 - 2][COLS - 1] = 0
+            map[i][k][map[i][k][0].length/4 - 1][COLS - 1] = 0
+            map[i][k][map[i][k][0].length/4][COLS - 1] = 0
+            map[i][k][map[i][k][0].length/4 + 1][COLS - 1] = 0
+            map[i][k][map[i][k][0].length/4 + 2][COLS - 1] = 0
           } 
         }
     }
@@ -140,6 +144,8 @@ function draw() {
 
   moveEnemies()
   trackBullet();
+
+  newRoom()
 }
 
 function moveCharacter(){
@@ -149,7 +155,7 @@ function moveCharacter(){
   playerxPos2 = Math.floor((player.x + player.width/2)/cellWidth);
   playeryPos2 = Math.floor((player.y + player.height/2)/cellHeight);
 
-  if(player.y + player.height/2 <= height && player.y -player.height/2 >= 0) {
+  if(player.y + player.height/2 < height && player.y - player.height/2 > 0) {
     if(room[playeryPos][playerxPos] === 1 || room[playeryPos2][playerxPos] === 1 || room[playeryPos][playerxPos2] === 1 || room[playeryPos2][playerxPos2] === 1) { // if touching wall
       player.x -= player.vel.x
       player.y -= player.vel.y
@@ -229,7 +235,6 @@ function spawnEnemies() {
 function enemyKilled() {
   for(let i = theEnemies.length - 1; i >= 0; i--) {
     for(let k = theBullets.length - 1; k >= 0; k--) {
-      console.log(theBullets[k].overlaps(player))
       if (theBullets[k].overlaps(theEnemies[i])) {
         theEnemies[i].health -= theBullets[k].strength;
         theBullets[k].remove();
@@ -274,12 +279,12 @@ function trackBullet() { // bullet deletion
     bullet.xPos = Math.floor(theBullets[i].x/cellWidth);
     bullet.yPos = Math.floor(theBullets[i].y/cellHeight);
 
-    if(theBullets[i].x > width || theBullets[i].x < 0 || theBullets[i].y > height || theBullets[i].y < 0) { // if bullet goes out of bounds
-      theBullets.splice(i, 1);
+    if(theBullets[i].x >= width || theBullets[i].x <= 0 || theBullets[i].y >= height || theBullets[i].y <= 0) { // if bullet goes out of bounds
       theBullets[i].remove();
+      theBullets.splice(i, 1);
     }
 
-    if(room[bullet.yPos][bullet.xPos] === 1) { // if bullet hits wall
+    else if(room[bullet.yPos][bullet.xPos] === 1) { // if bullet hits wall
       theBullets[i].remove();
       theBullets.splice(i, 1);
     }
@@ -425,25 +430,58 @@ function mapPosition() {
 }
 
 function changeRoom() {
-
   if (player.x >= width) { // right
     room = map[mapY][mapX + 1]
-    console.log(room, "right")
+    player.x = player.width/2
   }
 
   if (player.x <= 0) { // left
     room = map[mapY][mapX - 1]
-    console.log(room, "left")
+    player.x = width - player.width/2
   }
 
   if (player.y >= height) { // down
     room = map[mapY + 1][mapX]
-    console.log(room, "down")
+    player.y = player.height/2
   }
 
   if (player.y <= 0) { // up
     room = map[mapY - 1][mapX]
-    console.log(room, "up")
+    player.y = height - player.height/2
   }
-
+  newr = true
 }
+
+function newRoom() {
+  if (newr === true) { // start timer
+    time = millis()
+    newr = false
+  }
+  if (millis() - time > 2000 && theEnemies.length === 0) {
+    blockade(room)
+    spawnEnemies()
+  }
+}
+
+function blockade(room) {
+  for (let i = 19; i >= 0; i--){
+    for (let k = room[i].length - 1; k >= 0; k--){
+      if (i === 0){
+        room[i][k] = 1
+      }
+      if (k === 0){
+        room[i][k] = 1
+      }
+    }
+  }
+}
+
+// if (newr === true) { this does things every 2 seconds, probably good to keep for later
+//   time = millis()
+//   newr = false
+// }
+// if (millis() - time > 2000) {
+//   console.log("augh")
+//   spawnEnemies()
+//   time = millis()
+// }
