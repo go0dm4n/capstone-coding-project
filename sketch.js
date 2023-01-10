@@ -8,6 +8,7 @@
 // PEE FIVE DOT PLAY
 
 let room = []
+let oldroom = []
 let theBullets = [];
 let theEnemies = [];
 let yourBullets = [];
@@ -81,7 +82,7 @@ function makeMap(array) {
      n = Math.floor(random(0, array.length - 1))
       if(random(0, 100) < 80 && array.length > 0) {
         map[i][k] = array[n] // replace 0 in map with level
-        array[n].complete = false
+        array[n].complete = "false"
         array.splice(n, 1) // removes level from list of addable levels
         }
     }
@@ -146,6 +147,7 @@ function draw() {
   trackBullet();
 
   newRoom()
+  roomComplete()
 }
 
 function moveCharacter(){
@@ -207,15 +209,6 @@ function spawnEnemies() {
     enemy.yPos2 = Math.floor((enemy.y + enemy.height/2)/cellHeight);
 
     enemy.speed = 1;
-
-    if(enemy.xPos < 0 || enemy.yPos < 0 || enemy.yPos2 > height || enemy.xPos2 > width) {
-      enemy.remove()
-    }
-
-    if (room[enemy.yPos][enemy.xPos] === 1 || room[enemy.yPos2][enemy.xPos] === 1 || room[enemy.yPos][enemy.xPos2] === 1 || room[enemy.yPos2][enemy.xPos2] === 1) {
-      enemy.remove()
-    }
-
     enemy.health = (random(0, 2));
 
     if(enemy.health < 1) {
@@ -228,6 +221,15 @@ function spawnEnemies() {
     enemy.vel.x = 0
     enemy.vel.y = 0
     theEnemies.push(enemy);
+    if(enemy.xPos < 0 || enemy.yPos < 0 || enemy.yPos2 > height || enemy.xPos2 > width) {
+      enemy.remove()
+      theEnemies.splice(i, 1)
+    }
+
+    if (room[enemy.yPos][enemy.xPos] === 1 || room[enemy.yPos2][enemy.xPos] === 1 || room[enemy.yPos][enemy.xPos2] === 1 || room[enemy.yPos2][enemy.xPos2] === 1) {
+      enemy.remove()
+      theEnemies.splice(i, 1)
+    }
   }
 }
 
@@ -240,9 +242,9 @@ function enemyKilled() {
         theBullets.splice(k, 1);
         
         if(theEnemies[i].health <= 0) {
-          coin = new Sprite(theEnemies[i].x, theEnemies[i].y, 30);
+          coin = new Sprite(theEnemies[i].x, theEnemies[i].y, 30, "s");
           theEnemies[i].remove();
-          coin.collider = "d";
+          theEnemies.splice(i, 1);
           coin.color = 'yellow';
           theCoins.push(coin);
         }    
@@ -254,10 +256,7 @@ function enemyKilled() {
 function checkCollide() {
   for(let i = theEnemies.length - 1; i >= 0; i--) {
     for(let k = theBullets.length - 1; k >= 0; k--) {
-      if(theBullets[k].overlaps(player)) {
-      }
-
-      else if (player.overlaps(theEnemies[i])){
+      if (player.overlaps(theEnemies[i])){
         player.health -= 1
         }
     }
@@ -317,10 +316,12 @@ function drawRoom() {
   for (let i = 0; i < ROWS; i++) {
     for (let k = 0; k < COLS; k++) {
       if (room[i][k] === 0) {
+        noStroke()
         fill("white");
       }
 
       if (room[i][k] === 1) {
+        stroke(1)
         fill("black");
       }   
       rect(k * cellWidth, i * cellHeight, cellWidth, cellHeight); 
@@ -457,22 +458,45 @@ function newRoom() {
     time = millis()
     newr = false
   }
-  if (millis() - time > 2000 && theEnemies.length === 0) {
+  if (millis() - time > 2000 && room.complete === "false") { // once its been 2 seconds block the doors and spawn the enemies
     blockade(room)
     spawnEnemies()
+    room.complete = "in progress"
   }
 }
 
 function blockade(room) {
-  newroom = room
+  for (let i = 19; i >= 0; i--) {
+    oldroom.push(room[i])
+  }
+  console.log("oldroom", oldroom)
+
   for (let i = 19; i >= 0; i--){
     for (let k = room[i].length - 1; k >= 0; k--){
       if (i === 0){
-        newroom[i][k] = 1
+        room[i][k] = 1
       }
       if (k === 0){
-        newroom[i][k] = 1
+        room[i][k] = 1
       }
+      if (i === ROWS - 1){
+        room[i][k] = 1
+      }
+      if (k === COLS - 1){
+        room[i][k] = 1
+      }
+    }
+  }
+}
+
+function roomComplete(){
+  for (let i = map.length - 1; i >= 0; i--) {
+    for (let k = map[i].length - 1; k >= 0; k--) {
+      if(map[i][k] !== 0) {
+        if (theEnemies.length === 0 && map[i][k].complete === "in progress") {
+          room.complete = "true"
+       }
+     }
     }
   }
 }
