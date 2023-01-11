@@ -72,7 +72,6 @@ function setup() {
   // makeRoom();
   room = l0;
   l0.complete = true
-  // spawnEnemies();
   makeMap(theLevels1)
 }
 
@@ -198,8 +197,8 @@ function mousePressed() {
 }
 
 function spawnEnemies() {
-  console.log(room[1][1])
-  for(let i = 0; i < random(minEn, maxEn); i ++) {
+
+  for(let i = random(minEn, maxEn); i >= 0 ; i--) {
     enemy = new Sprite(random(0 + enemyWidth, width - enemyWidth), random(0 + enemyWidth, height - enemyWidth),"d");
 
     enemy.xPos = Math.floor((enemy.x - enemy.width/2)/cellWidth);
@@ -210,7 +209,8 @@ function spawnEnemies() {
 
     enemy.yPos2 = Math.floor((enemy.y + enemy.height/2)/cellHeight);
 
-    while (enemy.xPos < 0 || enemy.yPos < 0 || enemy.yPos2 > height || enemy.xPos2 > width || room[enemy.yPos][enemy.xPos] === 1 || room[enemy.yPos2][enemy.xPos] === 1 || room[enemy.yPos][enemy.xPos2] === 1 || room[enemy.yPos2][enemy.xPos2] === 1) {
+    while (enemy.xPos <= 0 || enemy.yPos <= 0 || enemy.yPos2 >= ROWS || enemy.xPos2 >= COLS || room[enemy.yPos][enemy.xPos] === 1 || room[enemy.yPos2][enemy.xPos] === 1 || room[enemy.yPos][enemy.xPos2] === 1 || room[enemy.yPos2][enemy.xPos2] === 1) {
+      console.log("retry")
       enemy.x, enemy.y = random(0 + enemyWidth, width - enemyWidth), random(0 + enemyWidth, height - enemyWidth)
 
       enemy.xPos = Math.floor((enemy.x - enemy.width)/cellWidth);
@@ -480,6 +480,7 @@ function newRoom() {
 }
 
 function blockade(room) {
+  oldroom = []
   for (let i = 0; i < 20; i++) {
     oldroom.push([])
     for (let k = 0; k < room[i].length; k++) {
