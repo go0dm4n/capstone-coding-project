@@ -71,6 +71,7 @@ function setup() {
 
   // makeRoom();
   room = l0;
+  l0.complete = true
   // spawnEnemies();
   makeMap(theLevels1)
 }
@@ -197,6 +198,7 @@ function mousePressed() {
 }
 
 function spawnEnemies() {
+  console.log(room[1][1])
   for(let i = 0; i < random(minEn, maxEn); i ++) {
     enemy = new Sprite(random(0 + enemyWidth, width - enemyWidth), random(0 + enemyWidth, height - enemyWidth),"d");
 
@@ -207,6 +209,19 @@ function spawnEnemies() {
     enemy.xPos2 = Math.floor((enemy.x + enemy.width/2)/cellWidth);
 
     enemy.yPos2 = Math.floor((enemy.y + enemy.height/2)/cellHeight);
+
+    while (enemy.xPos < 0 || enemy.yPos < 0 || enemy.yPos2 > height || enemy.xPos2 > width || room[enemy.yPos][enemy.xPos] === 1 || room[enemy.yPos2][enemy.xPos] === 1 || room[enemy.yPos][enemy.xPos2] === 1 || room[enemy.yPos2][enemy.xPos2] === 1) {
+      enemy.x, enemy.y = random(0 + enemyWidth, width - enemyWidth), random(0 + enemyWidth, height - enemyWidth)
+
+      enemy.xPos = Math.floor((enemy.x - enemy.width)/cellWidth);
+
+      enemy.yPos = Math.floor((enemy.y - enemy.height)/cellHeight);
+  
+      enemy.xPos2 = Math.floor((enemy.x + enemy.width)/cellWidth);
+  
+      enemy.yPos2 = Math.floor((enemy.y + enemy.height)/cellHeight);
+    }
+
 
     enemy.speed = 1;
     enemy.health = (random(0, 2));
@@ -221,15 +236,6 @@ function spawnEnemies() {
     enemy.vel.x = 0
     enemy.vel.y = 0
     theEnemies.push(enemy);
-    if(enemy.xPos < 0 || enemy.yPos < 0 || enemy.yPos2 > height || enemy.xPos2 > width) {
-      enemy.remove()
-      theEnemies.splice(i, 1)
-    }
-
-    if (room[enemy.yPos][enemy.xPos] === 1 || room[enemy.yPos2][enemy.xPos] === 1 || room[enemy.yPos][enemy.xPos2] === 1 || room[enemy.yPos2][enemy.xPos2] === 1) {
-      enemy.remove()
-      theEnemies.splice(i, 1)
-    }
   }
 }
 
@@ -298,6 +304,13 @@ function pickupItems() {
       money += 1;
     }
 
+    if(newr === true) {
+      for(i = theCoins.length - 1; i >= 0; i--) {
+        theCoins[i].remove();
+        theCoins.splice(i,1);
+        money += 1;
+      }
+    }
   }
 }
 
@@ -450,6 +463,7 @@ function changeRoom() {
     room = map[mapY - 1][mapX]
     player.y = height - player.height/2
   }
+
   newr = true
 }
 
@@ -466,10 +480,17 @@ function newRoom() {
 }
 
 function blockade(room) {
-  for (let i = 19; i >= 0; i--) {
-    oldroom.push(room[i])
+  for (let i = 0; i < 20; i++) {
+    oldroom.push([])
+    for (let k = 0; k < room[i].length; k++) {
+      if(room[i][k] === 1){
+        oldroom[i].push(1)
+      }
+      else if(room[i][k] === 0){
+        oldroom[i].push(0)
+      }
+    }
   }
-  console.log("oldroom", oldroom)
 
   for (let i = 19; i >= 0; i--){
     for (let k = room[i].length - 1; k >= 0; k--){
@@ -495,6 +516,11 @@ function roomComplete(){
       if(map[i][k] !== 0) {
         if (theEnemies.length === 0 && map[i][k].complete === "in progress") {
           room.complete = "true"
+          for (let i = 0; i < 20; i++) {
+            for (let k = 0; k < room[i].length; k++) {
+              room[i][k] = oldroom[i][k]
+            }
+          }
        }
      }
     }
