@@ -10,9 +10,13 @@
 let room = []
 let oldroom = []
 let theBullets = [];
+let pistol, shotgun, machinegun;
+let guns;
 let theEnemies = [];
 let yourBullets = [];
 let theCoins = [];
+
+
 let map = [[0,0,0,0], 
            [0,0,0,0],
            [0,0,0,0]]
@@ -66,13 +70,27 @@ function setup() {
   cellHeight = height / ROWS;
 
   player = new Sprite(width/2, height/2);
-  player.collider = "d"
+  player.collider = "k"
   player.health = 6;
+  player.healthtotal = 6;
 
   // makeRoom();
+
   room = l0;
-  l0.complete = true
+
+  pistol = new Sprite(player.x + player.width, player.y, 20, 10, "n")
+  pistol.color = (86, 86, 86)
+  shotgun = new Sprite(player.x + player.width, player.y, 17, 13, "n")
+  shotgun.color = (102, 57, 19)
+  machinegun = new Sprite(player.x + player.width, player.y, 30, 6, "n")
+  machinegun.color = (255, 114, 236)
+
+  guns = [pistol, shotgun, machinegun]
+
+  gun = guns[0];
+
   makeMap(theLevels1)
+  l0.complete = true
 }
 
 function makeMap(array) {
@@ -142,12 +160,14 @@ function draw() {
   checkCollide();
   pickupItems();
   drawRoom();
+  drawStuff()
 
   moveEnemies()
   trackBullet();
 
   newRoom()
   roomComplete()
+
 }
 
 function moveCharacter(){
@@ -196,10 +216,16 @@ function mousePressed() {
   // changeTile();
 }
 
+function mouseWheel() {
+  index = guns.indexOf(gun)
+  gun = guns[index + 1]
+}
+
 function spawnEnemies() {
 
-  for(let i = random(minEn, maxEn); i >= 0 ; i--) {
-    enemy = new Sprite(random(0 + enemyWidth, width - enemyWidth), random(0 + enemyWidth, height - enemyWidth),"d");
+  for(let i = Math.floor(random(minEn, maxEn)); i >= 0 ; i--) {
+    console.log(i)
+    enemy = new Sprite(random(enemyWidth, width - enemyWidth), random(enemyWidth, height - enemyWidth),"d");
 
     enemy.xPos = Math.floor((enemy.x - enemy.width/2)/cellWidth);
 
@@ -209,9 +235,9 @@ function spawnEnemies() {
 
     enemy.yPos2 = Math.floor((enemy.y + enemy.height/2)/cellHeight);
 
-    while (enemy.xPos <= 0 || enemy.yPos <= 0 || enemy.yPos2 >= ROWS || enemy.xPos2 >= COLS || room[enemy.yPos][enemy.xPos] === 1 || room[enemy.yPos2][enemy.xPos] === 1 || room[enemy.yPos][enemy.xPos2] === 1 || room[enemy.yPos2][enemy.xPos2] === 1) {
-      console.log("retry")
-      enemy.x, enemy.y = random(0 + enemyWidth, width - enemyWidth), random(0 + enemyWidth, height - enemyWidth)
+    while (!(enemy.xPos > 0 && enemy.yPos > 0 && enemy.yPos2 < ROWS - 1 && enemy.xPos2 < COLS - 1)) {
+      enemy.x = random(0 + enemyWidth, width - enemyWidth)
+      enemy.y = random(0 + enemyWidth, height - enemyWidth)
 
       enemy.xPos = Math.floor((enemy.x - enemy.width)/cellWidth);
 
@@ -220,6 +246,24 @@ function spawnEnemies() {
       enemy.xPos2 = Math.floor((enemy.x + enemy.width)/cellWidth);
   
       enemy.yPos2 = Math.floor((enemy.y + enemy.height)/cellHeight);
+    }
+
+    // console.log("wall", i, room[enemy.yPos][enemy.xPos], room[enemy.yPos2][enemy.xPos], room[enemy.yPos][enemy.xPos2], room[enemy.yPos2][enemy.xPos2])
+
+    while (room[enemy.yPos][enemy.xPos] === 1 || room[enemy.yPos2][enemy.xPos] === 1 || room[enemy.yPos][enemy.xPos2] === 1 || room[enemy.yPos2][enemy.xPos2] === 1) {
+
+      enemy.x = random(enemyWidth, width - enemyWidth)
+      enemy.y = random(enemyWidth, height - enemyWidth)
+
+      enemy.xPos = Math.floor((enemy.x - enemy.width)/cellWidth);
+  
+      enemy.yPos = Math.floor((enemy.y - enemy.height)/cellHeight);
+    
+      enemy.xPos2 = Math.floor((enemy.x + enemy.width)/cellWidth);
+    
+      enemy.yPos2 = Math.floor((enemy.y + enemy.height)/cellHeight);
+
+      // console.log("wall", i, room[enemy.yPos][enemy.xPos], room[enemy.yPos2][enemy.xPos], room[enemy.yPos][enemy.xPos2], room[enemy.yPos2][enemy.xPos2])
     }
 
 
@@ -248,7 +292,7 @@ function enemyKilled() {
         theBullets.splice(k, 1);
         
         if(theEnemies[i].health <= 0) {
-          coin = new Sprite(theEnemies[i].x, theEnemies[i].y, 30, "s");
+          coin = new Sprite(theEnemies[i].x, theEnemies[i].y, 30);
           theEnemies[i].remove();
           theEnemies.splice(i, 1);
           coin.color = 'yellow';
@@ -262,20 +306,34 @@ function enemyKilled() {
 function checkCollide() {
   for(let i = theEnemies.length - 1; i >= 0; i--) {
     for(let k = theBullets.length - 1; k >= 0; k--) {
-      if (player.overlaps(theEnemies[i])){
+      if (player.collides(theEnemies[i])){
         player.health -= 1
-        }
+      }
     }
   }
 }
 
-function shootBullet() {
-  bullet = new Sprite(player.x + player.width, player.y, 10);
-  bullet.collider = "k"
-  bullet.strength = 1;
-  bullet.speed = 10
-  bullet.moveTowards(mouse, bullet.speed / dist(bullet.x, bullet.y, mouseX, mouseY)); // dividing by distance from mouse to keep speed constant
-  theBullets.push(bullet);
+function shootBullet() { // spawns and moves bullets to cursor
+
+  if(gun === pistol) {
+    bullet = new Sprite(player.x + player.width, player.y, 10);
+    bullet.collider = "k"
+    bullet.strength = 1;
+    bullet.speed = 10
+    bullet.moveTowards(mouse, bullet.speed / dist(bullet.x, bullet.y, mouseX, mouseY)); // dividing by distance from mouse to keep speed constant
+    theBullets.push(bullet);
+  }
+
+  if(gun === shotgun) {
+    for(let i = -2; i < 2; i++) {
+      bullet = new Sprite(player.x + player.width, player.y, 10);
+      bullet.collider = "k"
+      bullet.strength = 1;
+      bullet.speed = 7
+      bullet.moveTowards(sin(30 * i) * (mouseX / sin(70)), mouseY, bullet.speed / dist(bullet.x, bullet.y, sin(30 * i) * (mouseX / sin(70)), mouseY)); 
+      theBullets.push(bullet);
+    }
+  }
 }
 
 function trackBullet() { // bullet deletion
@@ -297,19 +355,20 @@ function trackBullet() { // bullet deletion
 }
 
 function pickupItems() {
-  for (let i = theCoins.length - 1; i >= 0; i --){
-    if(player.collides(theCoins[i])) {
+  for (let i = theCoins.length - 1; i >= 0; i--){
+    theCoins[i].vel.x = 0
+    theCoins[i].vel.y = 0
+    if(theCoins[i].overlaps(player) || player.overlaps(theCoins[i])) {
       theCoins[i].remove();
       theCoins.splice(i,1);
       money += 1;
     }
-
-    if(newr === true) {
-      for(i = theCoins.length - 1; i >= 0; i--) {
-        theCoins[i].remove();
-        theCoins.splice(i,1);
-        money += 1;
-      }
+  }
+  if(newr === true) {
+    for(i = theCoins.length - 1; i >= 0; i--) {
+      theCoins[i].remove();
+      theCoins.splice(i,1);
+      money += 1;
     }
   }
 }
@@ -473,9 +532,9 @@ function newRoom() {
     newr = false
   }
   if (millis() - time > 2000 && room.complete === "false") { // once its been 2 seconds block the doors and spawn the enemies
+    room.complete = "in progress"
     blockade(room)
     spawnEnemies()
-    room.complete = "in progress"
   }
 }
 
@@ -524,6 +583,41 @@ function roomComplete(){
           }
        }
      }
+    }
+  }
+}
+
+function drawStuff() {
+  for (let i = 0; i < player.healthtotal; i++) {
+    fill(73, 19, 20)
+    rect(cellWidth/1.7  + i * cellWidth/1.5, cellHeight/2, cellWidth/1.5, cellHeight)
+  }
+
+  for(let k = 0; k < player.health; k++) {
+    fill("red")
+    rect(cellWidth/1.7  + k * cellWidth/1.5, cellHeight/2, cellWidth/1.5, cellHeight)
+  }
+
+  fill("yellow")
+  circle(cellWidth/1.7 + cellWidth * .6, cellHeight * 2.3, cellWidth * 1.2, cellHeight * 1.2)
+  strokeWeight(2)
+  textSize(cellWidth)
+  text(money, cellWidth*2, cellHeight * 2.65)
+
+
+
+  for (let i = 0; i < guns.length; i++) {
+    guns[i].x = player.x + player.width
+    guns[i].y = player.y
+    angleMode(DEGREES);
+    mouseAngle = asin(1/(Math.sqrt(Math.pow(abs(player.x - mouseX), 2) + Math.pow(abs(player.y - mouseY), 2))) * abs(mouseY - player.y))
+    rotate(mouseAngle)
+    // translate(player.x + player.width, player.y)
+    if (guns[i] !== gun) {
+      guns[i].visible = false
+    }
+    else {
+      guns[i].visible = true
     }
   }
 }
