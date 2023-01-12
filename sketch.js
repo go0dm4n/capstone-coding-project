@@ -15,6 +15,7 @@ let guns;
 let theEnemies = [];
 let yourBullets = [];
 let theCoins = [];
+let shottime = 1001
 
 
 let map = [[0,0,0,0], 
@@ -288,6 +289,7 @@ function enemyKilled() {
     for(let k = theBullets.length - 1; k >= 0; k--) {
       if (theBullets[k].overlaps(theEnemies[i])) {
         theEnemies[i].health -= theBullets[k].strength;
+        theEnemies[i].color = ("white")
         theBullets[k].remove();
         theBullets.splice(k, 1);
         
@@ -314,7 +316,6 @@ function checkCollide() {
 }
 
 function shootBullet() { // spawns and moves bullets to cursor
-
   if(gun === pistol) {
     bullet = new Sprite(player.x + player.width, player.y, 10);
     bullet.collider = "k"
@@ -325,14 +326,20 @@ function shootBullet() { // spawns and moves bullets to cursor
   }
 
   if(gun === shotgun) {
-    for(let i = -2; i < 2; i++) {
-      bullet = new Sprite(player.x + player.width, player.y, 10);
-      bullet.collider = "k"
-      bullet.strength = 1;
-      bullet.speed = 7
-      bullet.moveTowards(sin(30 * i) * (mouseX / sin(70)), mouseY, bullet.speed / dist(bullet.x, bullet.y, sin(30 * i) * (mouseX / sin(70)), mouseY)); 
-      theBullets.push(bullet);
-    }
+    console
+    if(millis() - shottime > 1000) {
+      for(let i = -2; i < 3; i++) {
+        if (i !== 0) {
+          bullet = new Sprite(player.x + player.width, player.y, 10);
+          bullet.collider = "k"
+          bullet.strength = 1;
+          bullet.speed = 7
+          bullet.moveTowards(mouseX + (abs(player.y - mouseY) * tan(15 * i)), mouseY + (abs(player.x - mouseX) * tan(15 * i)), bullet.speed / dist(bullet.x, bullet.y, mouseX + (abs(player.y - mouseY) * tan(15 * i)), mouseY + (abs(player.x - mouseX) * tan(15 * i)))); 
+          theBullets.push(bullet);
+          shottime = millis()
+        }
+      }
+  }
   }
 }
 
@@ -611,7 +618,7 @@ function drawStuff() {
     guns[i].y = player.y
     angleMode(DEGREES);
     mouseAngle = asin(1/(Math.sqrt(Math.pow(abs(player.x - mouseX), 2) + Math.pow(abs(player.y - mouseY), 2))) * abs(mouseY - player.y))
-    rotate(mouseAngle)
+    // rotate(mouseAngle)
     // translate(player.x + player.width, player.y)
     if (guns[i] !== gun) {
       guns[i].visible = false
