@@ -15,8 +15,9 @@ let guns;
 let theEnemies = [];
 let yourBullets = [];
 let theCoins = [];
-let shottime = 1001
 
+let shottime = 1001;
+let pisttime = 300;
 
 let map = [[0,0,0,0], 
            [0,0,0,0],
@@ -81,13 +82,26 @@ function setup() {
 
   pistol = new Sprite(player.x + player.width, player.y, 20, 10, "n")
   pistol.color = (86, 86, 86)
+  pistol.magazine = 12
+  pistol.ammo = 12
+  pistol.reloadtime = 500
+  pistol.reload = 500
+
   shotgun = new Sprite(player.x + player.width, player.y, 17, 13, "n")
   shotgun.color = (102, 57, 19)
+  shotgun.magazine = 4
+  shotgun.ammo = 4
+  shotgun.reloadtime = 8000
+  shotgun.reload = 8000
+
   machinegun = new Sprite(player.x + player.width, player.y, 30, 6, "n")
   machinegun.color = (255, 114, 236)
+  machinegun.magazine = 25
+  machinegun.ammo = 25
+  machinegun.reloadtime = 1500
+  machinegun.reload = 1500
 
   guns = [pistol, shotgun, machinegun]
-
   gun = guns[0];
 
   makeMap(theLevels1)
@@ -169,6 +183,7 @@ function draw() {
   newRoom()
   roomComplete()
 
+  reload()
 }
 
 function moveCharacter(){
@@ -219,13 +234,16 @@ function mousePressed() {
 
 function mouseWheel() {
   index = guns.indexOf(gun)
+  if (index >= guns.length - 1) {
+    index = -1
+  }
+  console.log(index, gun.magazine)
   gun = guns[index + 1]
 }
 
 function spawnEnemies() {
 
   for(let i = Math.floor(random(minEn, maxEn)); i >= 0 ; i--) {
-    console.log(i)
     enemy = new Sprite(random(enemyWidth, width - enemyWidth), random(enemyWidth, height - enemyWidth),"d");
 
     enemy.xPos = Math.floor((enemy.x - enemy.width/2)/cellWidth);
@@ -269,29 +287,42 @@ function spawnEnemies() {
 
 
     enemy.speed = 1;
-    enemy.health = (random(0, 2));
+    enemy.health = (Math.floor(random(1, 3)));
 
-    if(enemy.health < 1) {
+    if(enemy.health = 1) {
+      enemy.oldcolor = "red";
       enemy.color = "red";
     }
-    if(enemy.health > 1) {
+    if(enemy.health = 2) {
+      enemy.oldcolor = "blue";
       enemy.color = "blue";
     }
 
     enemy.vel.x = 0
     enemy.vel.y = 0
+
+    enemy.inv = 81
+
     theEnemies.push(enemy);
   }
 }
 
 function enemyKilled() {
   for(let i = theEnemies.length - 1; i >= 0; i--) {
+    if(theEnemies.length > 0) {
+      theEnemies[i].color = theEnemies[i].oldcolor 
+    }
     for(let k = theBullets.length - 1; k >= 0; k--) {
-      if (theBullets[k].overlaps(theEnemies[i])) {
+
+      if (theBullets[k].overlaps(theEnemies[i]) && millis() - enemy.inv > 80) {
         theEnemies[i].health -= theBullets[k].strength;
-        theEnemies[i].color = ("white")
+
+        theEnemies[i].color = ("orange")
+
+
         theBullets[k].remove();
         theBullets.splice(k, 1);
+        enemy.inv = millis()
         
         if(theEnemies[i].health <= 0) {
           coin = new Sprite(theEnemies[i].x, theEnemies[i].y, 30);
@@ -316,30 +347,34 @@ function checkCollide() {
 }
 
 function shootBullet() { // spawns and moves bullets to cursor
-  if(gun === pistol) {
-    bullet = new Sprite(player.x + player.width, player.y, 10);
+  if(gun === pistol && millis() - pisttime > 500 && gun.ammo > 0) {
+    stroke("black")
+    gun.ammo-- 
+    bullet = new Sprite(gun.x + gun.width/2, gun.y, 10);
     bullet.collider = "k"
     bullet.strength = 1;
     bullet.speed = 10
+    bullet.color = (80, 80, 80)
     bullet.moveTowards(mouse, bullet.speed / dist(bullet.x, bullet.y, mouseX, mouseY)); // dividing by distance from mouse to keep speed constant
     theBullets.push(bullet);
+    pisttime = millis()
   }
 
-  if(gun === shotgun) {
-    console
-    if(millis() - shottime > 1000) {
+  if(gun === shotgun && millis() - shottime > 1000 && gun.ammo > 0) {
+    stroke("black")
+    gun.ammo--
       for(let i = -2; i < 3; i++) {
         if (i !== 0) {
-          bullet = new Sprite(player.x + player.width, player.y, 10);
+          bullet = new Sprite(gun.x + gun.width/2, player.y, 10);
           bullet.collider = "k"
           bullet.strength = 1;
           bullet.speed = 7
+          bullet.color = (80, 80, 80)
           bullet.moveTowards(mouseX + (abs(player.y - mouseY) * tan(15 * i)), mouseY + (abs(player.x - mouseX) * tan(15 * i)), bullet.speed / dist(bullet.x, bullet.y, mouseX + (abs(player.y - mouseY) * tan(15 * i)), mouseY + (abs(player.x - mouseX) * tan(15 * i)))); 
           theBullets.push(bullet);
           shottime = millis()
-        }
       }
-  }
+    }
   }
 }
 
@@ -611,20 +646,34 @@ function drawStuff() {
   textSize(cellWidth)
   text(money, cellWidth*2, cellHeight * 2.65)
 
+  stroke("white")
+  strokeWeight(1)
+  fill(80, 80, 80, 80)
+  rect(width - cellWidth * 5, height - cellHeight * 4, cellWidth * 4, cellHeight * 2.7)
 
+  noStroke()
+  fill(255, 255, 255)
+  text(gun.ammo + "/" + gun.magazine, width - cellWidth * 5, height - 15)
 
+  strokeWeight(1)
+  stroke("black")
   for (let i = 0; i < guns.length; i++) {
     guns[i].x = player.x + player.width
     guns[i].y = player.y
-    angleMode(DEGREES);
-    mouseAngle = asin(1/(Math.sqrt(Math.pow(abs(player.x - mouseX), 2) + Math.pow(abs(player.y - mouseY), 2))) * abs(mouseY - player.y))
-    // rotate(mouseAngle)
-    // translate(player.x + player.width, player.y)
     if (guns[i] !== gun) {
       guns[i].visible = false
     }
     else {
       guns[i].visible = true
+    }
+  }
+}
+
+function reload() {
+  if (kb.pressing("R")) {
+    if (millis() - gun.reload > gun.reloadtime) {
+      gun.ammo = gun.magazine
+      gun.reload = millis()
     }
   }
 }
