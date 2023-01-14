@@ -16,6 +16,8 @@ let theEnemies = [];
 let yourBullets = [];
 let theCoins = [];
 
+let player;
+
 let map = [[0,0,0,0], 
            [0,0,0,0],
            [0,0,0,0]]
@@ -23,6 +25,8 @@ let map = [[0,0,0,0],
 let l0, l1, l2, l3, l4;
 
 let time;
+
+let font;
 
 let newr = false;
 let reloading = false;
@@ -53,25 +57,36 @@ let mapX = 0;
 let mapY = 0;
 
 function preload() {
-  l0 = loadJSON("level grids/1-0.json")
-  l1 = loadJSON("level grids/1-1.json")
-  l2 = loadJSON("level grids/1-2.json")
-  l3 = loadJSON("level grids/1-3.json")
-  l4 = loadJSON("level grids/1-4.json")
+  l0 = loadJSON("level grids/1-0.json");
+  l1 = loadJSON("level grids/1-1.json");
+  l2 = loadJSON("level grids/1-2.json");
+  l3 = loadJSON("level grids/1-3.json");
+  l4 = loadJSON("level grids/1-4.json");
 
-  theLevels1 = [l0, l1, l2, l3, l4]
+  theLevels1 = [l0, l1, l2, l3, l4];
 
-  tileTL = loadImage("tile assets/tileTL.png")
-  tileTR = loadImage("tile assets/tileTR.png")
-  tileT = loadImage("tile assets/tileTB.png")
-  tileB = loadImage("tile assets/tileTB.png")
-  tileL = loadImage("tile assets/tileL.png")
-  tileR = loadImage("tile assets/tileR.png")
-  tileBL = loadImage("tile assets/tileBL.png")
-  tileBR = loadImage("tile assets/tileBR.png")
-  tileTM = loadImage("tile assets/tileTM.png")
-  tileF = loadImage("tile assets/floor0.png")
-  tileF1 = loadImage("tile assets/floor1.png")
+  tileTL = loadImage("assets/tileTL.png");
+  tileTR = loadImage("assets/tileTR.png");
+  tileT = loadImage("assets/tileTB.png");
+  tileB = loadImage("assets/tileTB.png");
+  tileL = loadImage("assets/tileL.png");
+  tileR = loadImage("assets/tileR.png");
+  tileBL = loadImage("assets/tileBL.png");
+  tileBR = loadImage("assets/tileBR.png");
+  tileTM = loadImage("assets/tileTM.png");
+  tileF = loadImage("assets/floor0.png");
+  tileF1 = loadImage("assets/floor1.png");
+
+  coinimg = loadImage("assets/coin.png");
+  healthimg = loadImage("assets/healthbar.png");
+  healthemptyimg = loadImage("assets/healthbarempty.png");
+
+  font = loadFont('assets/8bitfont.ttf');
+
+  idle1 = loadImage("assets/player/basic_idle01.png");
+  // idle2 = loadImage("assets/player/basic_idle02.png");
+  // idle3 = loadImage("assets/player/basic_idle03.png");
+  // idle4 = loadImage("assets/player/basic_idle04.png");
 }
 
 let theLevels1;
@@ -86,6 +101,14 @@ function setup() {
   player.collider = "k"
   player.health = 6;
   player.healthtotal = 6;
+  // player.addAni('idle', 'assets/player/basic_idle01.png', 3)
+
+  coinimg.width = coinimg.width/4
+  coinimg.height = coinimg.height/4
+  healthimg.width = healthimg.width/2
+  healthimg.height = healthimg.height/2
+  healthemptyimg.width = healthemptyimg.width/2
+  healthemptyimg.height = healthemptyimg.height/2
 
   // makeRoom();
 
@@ -242,6 +265,7 @@ function moveCharacter(){
   if (!keyIsPressed) { // dont move if nothing is pressed
     player.vel.x = 0;
     player.vel.y = 0;
+    player.ani = 'idle'
   }
 
   if(player.x >= width || player.x <= 0 || player.y >= height || player.y <= 0) {
@@ -353,7 +377,8 @@ function enemyKilled() { // enemy bullet collision check
       }
 
       if (theEnemies[i].health <= 0) {
-        coin = new Sprite(theEnemies[i].x, theEnemies[i].y, 30);
+        coin = new Sprite(theEnemies[i].x, theEnemies[i].y);
+        coin.image = coinimg
         theEnemies[i].remove();
         theEnemies.splice(i, 1);
         coin.color = 'yellow';
@@ -719,20 +744,19 @@ function roomComplete(){ // if all the enemies are dead
 
 function drawStuff() {
   for (let i = 0; i < player.healthtotal; i++) { // total health
-    fill(73, 19, 20)
-    rect(cellWidth/1.7  + i * cellWidth/1.5, cellHeight/2, cellWidth/1.5, cellHeight)
+    image(healthemptyimg, cellWidth/1.7  + i * cellWidth/1.5, cellHeight/2)
   }
 
   for(let k = 0; k < player.health; k++) { // current health
-    fill("red")
-    rect(cellWidth/1.7  + k * cellWidth/1.5, cellHeight/2, cellWidth/1.5, cellHeight)
+    image(healthimg, cellWidth/1.7  + k * cellWidth/1.5, cellHeight/2)
   }
 
   fill("yellow") // money
-  circle(cellWidth/1.7 + cellWidth * .6, cellHeight * 2.3, cellWidth * 1.2, cellHeight * 1.2)
+  image(coinimg, cellWidth/1.7, cellHeight * 2, cellWidth * 1.2, cellHeight * 1.2)
   strokeWeight(2)
   textSize(cellWidth)
-  text(money, cellWidth*2, cellHeight * 2.65)
+  textFont(font)
+  text(money, cellWidth*2, cellHeight * 3)
 
   stroke("white") // gun display
   strokeWeight(1)
