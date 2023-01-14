@@ -16,9 +16,6 @@ let theEnemies = [];
 let yourBullets = [];
 let theCoins = [];
 
-let shottime = 1001;
-let pisttime = 300;
-
 let map = [[0,0,0,0], 
            [0,0,0,0],
            [0,0,0,0]]
@@ -28,6 +25,7 @@ let l0, l1, l2, l3, l4;
 let time;
 
 let newr = false;
+let reloading = false;
 
 let minEn = 1
 let maxEn = 6
@@ -60,7 +58,20 @@ function preload() {
   l2 = loadJSON("level grids/1-2.json")
   l3 = loadJSON("level grids/1-3.json")
   l4 = loadJSON("level grids/1-4.json")
+
   theLevels1 = [l0, l1, l2, l3, l4]
+
+  tileTL = loadImage("tile assets/tileTL.png")
+  tileTR = loadImage("tile assets/tileTR.png")
+  tileT = loadImage("tile assets/tileTB.png")
+  tileB = loadImage("tile assets/tileTB.png")
+  tileL = loadImage("tile assets/tileL.png")
+  tileR = loadImage("tile assets/tileR.png")
+  tileBL = loadImage("tile assets/tileBL.png")
+  tileBR = loadImage("tile assets/tileBR.png")
+  tileTM = loadImage("tile assets/tileTM.png")
+  tileF = loadImage("tile assets/floor0.png")
+  tileF1 = loadImage("tile assets/floor1.png")
 }
 
 let theLevels1;
@@ -82,24 +93,36 @@ function setup() {
 
   pistol = new Sprite(player.x + player.width, player.y, 20, 10, "n")
   pistol.color = (86, 86, 86)
+
   pistol.magazine = 12
   pistol.ammo = 12
+
   pistol.reloadtime = 500
   pistol.reload = 500
 
+  pistol.firerate = 300
+  pistol.fired = 301
+
   shotgun = new Sprite(player.x + player.width, player.y, 17, 13, "n")
   shotgun.color = (102, 57, 19)
+
   shotgun.magazine = 4
   shotgun.ammo = 4
-  shotgun.reloadtime = 8000
-  shotgun.reload = 8000
+
+  shotgun.reloadtime = 1300
+  shotgun.reload = 1300
+
+  shotgun.firerate = 1000
+  shotgun.fired = 1001
 
   machinegun = new Sprite(player.x + player.width, player.y, 30, 6, "n")
   machinegun.color = (255, 114, 236)
+
   machinegun.magazine = 25
   machinegun.ammo = 25
-  machinegun.reloadtime = 1500
-  machinegun.reload = 1500
+
+  machinegun.reloadtime = 3000
+  machinegun.reload = 3000
 
   guns = [pistol, shotgun, machinegun]
   gun = guns[0];
@@ -237,8 +260,14 @@ function mouseWheel() {
   if (index >= guns.length - 1) {
     index = -1
   }
-  console.log(index, gun.magazine)
   gun = guns[index + 1]
+}
+
+function keyPressed() {
+  if(keyCode === 82 && gun.ammo < gun.magazine && reloading === false) {
+    gun.reload = millis()
+    reloading = true
+  }
 }
 
 function spawnEnemies() {
@@ -298,45 +327,43 @@ function spawnEnemies() {
       enemy.color = "blue";
     }
 
-    enemy.vel.x = 0
-    enemy.vel.y = 0
+    enemy.vel.x = 0;
+    enemy.vel.y = 0;
 
-    enemy.inv = 81
+    enemy.inv = 81 // invincibility frames for enemies
 
     theEnemies.push(enemy);
   }
 }
 
-function enemyKilled() {
+function enemyKilled() { // enemy bullet collision check
   for(let i = theEnemies.length - 1; i >= 0; i--) {
     if(theEnemies.length > 0) {
       theEnemies[i].color = theEnemies[i].oldcolor 
     }
+
     for(let k = theBullets.length - 1; k >= 0; k--) {
 
       if (theBullets[k].overlaps(theEnemies[i]) && millis() - enemy.inv > 80) {
         theEnemies[i].health -= theBullets[k].strength;
-
         theEnemies[i].color = ("orange")
-
-
         theBullets[k].remove();
         theBullets.splice(k, 1);
-        enemy.inv = millis()
-        
-        if(theEnemies[i].health <= 0) {
-          coin = new Sprite(theEnemies[i].x, theEnemies[i].y, 30);
-          theEnemies[i].remove();
-          theEnemies.splice(i, 1);
-          coin.color = 'yellow';
-          theCoins.push(coin);
-        }    
+        enemy.inv = millis()    
+      }
+
+      if (theEnemies[i].health <= 0) {
+        coin = new Sprite(theEnemies[i].x, theEnemies[i].y, 30);
+        theEnemies[i].remove();
+        theEnemies.splice(i, 1);
+        coin.color = 'yellow';
+        theCoins.push(coin);
       }
     }
   }
 }
 
-function checkCollide() {
+function checkCollide() { // player collides with enemy
   for(let i = theEnemies.length - 1; i >= 0; i--) {
     for(let k = theBullets.length - 1; k >= 0; k--) {
       if (player.collides(theEnemies[i])){
@@ -347,32 +374,34 @@ function checkCollide() {
 }
 
 function shootBullet() { // spawns and moves bullets to cursor
-  if(gun === pistol && millis() - pisttime > 500 && gun.ammo > 0) {
-    stroke("black")
-    gun.ammo-- 
-    bullet = new Sprite(gun.x + gun.width/2, gun.y, 10);
-    bullet.collider = "k"
-    bullet.strength = 1;
-    bullet.speed = 10
-    bullet.color = (80, 80, 80)
-    bullet.moveTowards(mouse, bullet.speed / dist(bullet.x, bullet.y, mouseX, mouseY)); // dividing by distance from mouse to keep speed constant
-    theBullets.push(bullet);
-    pisttime = millis()
-  }
+  if(reloading === false) {
+    if(gun === pistol && millis() - gun.fired > gun.firerate && gun.ammo > 0) {
+      stroke("black")
+      gun.ammo-- 
+      bullet = new Sprite(gun.x + gun.width/2, gun.y, 10);
+      bullet.collider = "k"
+      bullet.strength = 1;
+      bullet.speed = 10
+      bullet.color = (80, 80, 80)
+      bullet.moveTowards(mouse, bullet.speed / dist(bullet.x, bullet.y, mouseX, mouseY)); // dividing by distance from mouse to keep speed constant
+      theBullets.push(bullet);
+      gun.fired = millis()
+    }
 
-  if(gun === shotgun && millis() - shottime > 1000 && gun.ammo > 0) {
-    stroke("black")
-    gun.ammo--
-      for(let i = -2; i < 3; i++) {
-        if (i !== 0) {
-          bullet = new Sprite(gun.x + gun.width/2, player.y, 10);
-          bullet.collider = "k"
-          bullet.strength = 1;
-          bullet.speed = 7
-          bullet.color = (80, 80, 80)
-          bullet.moveTowards(mouseX + (abs(player.y - mouseY) * tan(15 * i)), mouseY + (abs(player.x - mouseX) * tan(15 * i)), bullet.speed / dist(bullet.x, bullet.y, mouseX + (abs(player.y - mouseY) * tan(15 * i)), mouseY + (abs(player.x - mouseX) * tan(15 * i)))); 
-          theBullets.push(bullet);
-          shottime = millis()
+    if(gun === shotgun && millis() - gun.fired > gun.firerate && gun.ammo > 0) {
+      stroke("black")
+      gun.ammo--
+        for(let i = -2; i < 3; i++) {
+          if (i !== 0) {
+            bullet = new Sprite(gun.x + gun.width/2, player.y, 10);
+            bullet.collider = "k"
+            bullet.strength = 1;
+            bullet.speed = 7
+            bullet.color = (80, 80, 80)
+            bullet.moveTowards(mouseX + (abs(player.y - mouseY) * tan(15 * i)), mouseY + (abs(player.x - mouseX) * tan(15 * i)), bullet.speed / dist(bullet.x, bullet.y, mouseX + (abs(player.y - mouseY) * tan(15 * i)), mouseY + (abs(player.x - mouseX) * tan(15 * i)))); 
+            theBullets.push(bullet);
+            gun.fired = millis()
+        }
       }
     }
   }
@@ -381,7 +410,7 @@ function shootBullet() { // spawns and moves bullets to cursor
 function trackBullet() { // bullet deletion
   for(let i = theBullets.length - 1; i >= 0; i--) {
 
-    bullet.xPos = Math.floor(theBullets[i].x/cellWidth);
+    bullet.xPos = Math.floor(theBullets[i].x/cellWidth); // bullet position
     bullet.yPos = Math.floor(theBullets[i].y/cellHeight);
 
     if(theBullets[i].x >= width || theBullets[i].x <= 0 || theBullets[i].y >= height || theBullets[i].y <= 0) { // if bullet goes out of bounds
@@ -398,16 +427,16 @@ function trackBullet() { // bullet deletion
 
 function pickupItems() {
   for (let i = theCoins.length - 1; i >= 0; i--){
-    theCoins[i].vel.x = 0
+    theCoins[i].vel.x = 0 // prevent coins from moving off screen due to colliders malfunctioning
     theCoins[i].vel.y = 0
-    if(theCoins[i].overlaps(player) || player.overlaps(theCoins[i])) {
-      theCoins[i].remove();
+    if(theCoins[i].overlaps(player)) { // if player touches a coin
+      theCoins[i].remove(); // delete sprite & remove from array
       theCoins.splice(i,1);
       money += 1;
     }
   }
   if(newr === true) {
-    for(i = theCoins.length - 1; i >= 0; i--) {
+    for(i = theCoins.length - 1; i >= 0; i--) { // if you enter a new room but there are still coins on the floor, auto collect the coins
       theCoins[i].remove();
       theCoins.splice(i,1);
       money += 1;
@@ -415,7 +444,7 @@ function pickupItems() {
   }
 }
 
-function makeRoom() {
+function makeRoom() { // creates blank room if needed
   for (let i = 0; i < ROWS; i++) {
     room.push([]);
     for (let k = 0; k < COLS; k++) {
@@ -424,28 +453,88 @@ function makeRoom() {
   }
 }
 
-function drawRoom() {
+function drawRoom() { // draws room based on tiles
   let cellWidth = width / COLS;
   let cellHeight = height / ROWS;
   for (let i = 0; i < ROWS; i++) {
     for (let k = 0; k < COLS; k++) {
-      if (room[i][k] === 0) {
+      if (room[i][k] === 0) { // if tile = 0, color it white
         noStroke()
-        fill("white");
+        if (i === 0 || i === ROWS - 1 || k === 0 || k === COLS - 1){
+          image(tileF, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+        else if (room[i + 1][k] === 0 && room[i - 1][k] === 0 && room[i][k - 1] === 0 && room[i][k + 1] === 0 && room[i - 1][k - 1] === 0 && room[i - 1][k + 1] === 0 && room[i + 1][k - 1] === 0 && room[i + 1][k + 1] === 0) { // floor 1
+          image(tileF1, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+        else {
+          image(tileF, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
       }
 
-      if (room[i][k] === 1) {
+      if (room[i][k] === 1) { // if tile = 1, color it black
         stroke(1)
-        fill("black");
-      }   
-      rect(k * cellWidth, i * cellHeight, cellWidth, cellHeight); 
+        if (i === 0) {
+          image(tileT, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
 
+        else if (i === ROWS - 1) {
+          image(tileB, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+        else if (k === 0) {
+          image(tileR, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+        else if (k === COLS - 1) {
+          image(tileL, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+        else if (room[i - 1][k] === 1 && room[i][k - 1] === 1 && room[i][k + 1] === 0 && room[i + 1][k] === 0) { // bottom right
+          image(tileBR, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+        else if (room[i + 1][k] === 1 && room[i][k - 1] === 1 && room[i][k + 1] === 0 && room[i - 1][k] === 0) { // top right
+          image(tileTR, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+        else if (room[i + 1][k] === 1 && room[i][k + 1] === 1 && room[i][k - 1] === 0 && room[i - 1][k] === 0) { // top left
+          image(tileTL, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+        else if (room[i - 1][k] === 1 && room[i][k + 1] === 1 && room[i][k - 1] === 0 && room[i + 1][k] === 0) { // bottom left
+          image(tileBL, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+        else if (room[i - 1][k] === 1 && room[i][k + 1] === 1 && room[i][k - 1] === 1 && room[i + 1][k] === 0) { // bottom
+          image(tileB, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+        else if (room[i + 1][k] === 1 && room[i][k + 1] === 1 && room[i][k - 1] === 1 && room[i - 1][k] === 0) { // top
+          image(tileT, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+        else if (room[i + 1][k] === 1 && room[i - 1][k] === 1 && room[i][k + 1] === 1 && room[i][k - 1] === 0) { // left
+          image(tileL, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+        else if (room[i + 1][k] === 1 && room[i - 1][k] === 1 && room[i][k - 1] === 1 && room[i][k + 1] === 0) { // right
+          image(tileR, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+        else if (room[i + 1][k] === 0 && room[i - 1][k] === 0) { // right
+          image(tileT, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+        else { // floor 0
+          image(tileTM, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+      }   
     }
   }
 
 }
 
-function changeTile(){
+function changeTile(){ // room editing tool
   xPos = Math.floor(mouseX/cellWidth);
   yPos = Math.floor(mouseY/cellHeight);
   if (room[yPos][xPos] === 0) {
@@ -530,7 +619,7 @@ function touchingWall(left, top, right, bottom) {
   return room[top][left] !== 1 && room[bottom][left] !== 1 && room[top][right] !== 1 && room[bottom][right] !== 1;
 }
 
-function mapPosition() {
+function mapPosition() { // finds where you are on the map
   mapY = -1
   for (let i = 0; i <= map.length; i++) {
     mapY++
@@ -544,7 +633,7 @@ function mapPosition() {
   }
 }
 
-function changeRoom() {
+function changeRoom() { // if you go through a door, change the room
   if (player.x >= width) { // right
     room = map[mapY][mapX + 1]
     player.x = player.width/2
@@ -568,20 +657,21 @@ function changeRoom() {
   newr = true
 }
 
-function newRoom() {
+function newRoom() { // closes door behind you and spawns enemies
   if (newr === true) { // start timer
     time = millis()
     newr = false
   }
-  if (millis() - time > 2000 && room.complete === "false") { // once its been 2 seconds block the doors and spawn the enemies
+
+  if (millis() - time > 2000 && room.complete === "false") { // once it's been 2 seconds block the doors and spawn the enemies
     room.complete = "in progress"
     blockade(room)
     spawnEnemies()
   }
 }
 
-function blockade(room) {
-  oldroom = []
+function blockade(room) { // blocks the doors
+  oldroom = [] // copy of room so it can be reset after
   for (let i = 0; i < 20; i++) {
     oldroom.push([])
     for (let k = 0; k < room[i].length; k++) {
@@ -612,52 +702,51 @@ function blockade(room) {
   }
 }
 
-function roomComplete(){
+function roomComplete(){ // if all the enemies are dead
   for (let i = map.length - 1; i >= 0; i--) {
     for (let k = map[i].length - 1; k >= 0; k--) {
-      if(map[i][k] !== 0) {
-        if (theEnemies.length === 0 && map[i][k].complete === "in progress") {
-          room.complete = "true"
+      if (map[i][k] !== 0 && theEnemies.length === 0 && map[i][k].complete === "in progress") {
+        room.complete = "true"
           for (let i = 0; i < 20; i++) {
             for (let k = 0; k < room[i].length; k++) {
               room[i][k] = oldroom[i][k]
-            }
           }
-       }
+        }
      }
     }
   }
 }
 
 function drawStuff() {
-  for (let i = 0; i < player.healthtotal; i++) {
+  for (let i = 0; i < player.healthtotal; i++) { // total health
     fill(73, 19, 20)
     rect(cellWidth/1.7  + i * cellWidth/1.5, cellHeight/2, cellWidth/1.5, cellHeight)
   }
 
-  for(let k = 0; k < player.health; k++) {
+  for(let k = 0; k < player.health; k++) { // current health
     fill("red")
     rect(cellWidth/1.7  + k * cellWidth/1.5, cellHeight/2, cellWidth/1.5, cellHeight)
   }
 
-  fill("yellow")
+  fill("yellow") // money
   circle(cellWidth/1.7 + cellWidth * .6, cellHeight * 2.3, cellWidth * 1.2, cellHeight * 1.2)
   strokeWeight(2)
   textSize(cellWidth)
   text(money, cellWidth*2, cellHeight * 2.65)
 
-  stroke("white")
+  stroke("white") // gun display
   strokeWeight(1)
   fill(80, 80, 80, 80)
   rect(width - cellWidth * 5, height - cellHeight * 4, cellWidth * 4, cellHeight * 2.7)
 
-  noStroke()
+  noStroke() // ammo count
   fill(255, 255, 255)
   text(gun.ammo + "/" + gun.magazine, width - cellWidth * 5, height - 15)
 
   strokeWeight(1)
   stroke("black")
-  for (let i = 0; i < guns.length; i++) {
+
+  for (let i = 0; i < guns.length; i++) { // draw gun next to player
     guns[i].x = player.x + player.width
     guns[i].y = player.y
     if (guns[i] !== gun) {
@@ -669,11 +758,22 @@ function drawStuff() {
   }
 }
 
-function reload() {
-  if (kb.pressing("R")) {
-    if (millis() - gun.reload > gun.reloadtime) {
-      gun.ammo = gun.magazine
-      gun.reload = millis()
+function reload() { // if R is pressed, after a certain amount of time refill magazine
+
+  if(reloading === true) {
+
+    if (millis() - gun.reload < gun.reloadtime) { // reload wait time
+      fill("white")
+      rect(player.x - player.width * 1.1, player.y - player.height * 1.1, player.width * 2.2, player.height / 5)
+      fill("green");
+      noStroke()
+      rect(player.x - player.width * 1.1, player.y - player.height * 1.1, ((millis() - gun.reload) * (gun.magazine)) / (player.width * 1.1), player.height / 5)
+    }
+
+    if (millis() - gun.reload > gun.reloadtime) { // fills gun with bullets
+        gun.ammo = gun.magazine
+        gun.reload = millis()
+        reloading = false
     }
   }
 }
