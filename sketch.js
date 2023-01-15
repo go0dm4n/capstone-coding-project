@@ -16,6 +16,10 @@ let theEnemies = [];
 let yourBullets = [];
 let theCoins = [];
 
+let tileF1, tileF2
+
+let theTiles = [tileF1, tileF2]
+
 let player;
 
 let map = [[0,0,0,0], 
@@ -57,7 +61,7 @@ let mapX = 0;
 let mapY = 0;
 
 function preload() {
-  l0 = loadJSON("level grids/1-0.json");
+  l0 = loadJSON("level grids/1-0.json"); // different rooms
   l1 = loadJSON("level grids/1-1.json");
   l2 = loadJSON("level grids/1-2.json");
   l3 = loadJSON("level grids/1-3.json");
@@ -65,31 +69,36 @@ function preload() {
 
   theLevels1 = [l0, l1, l2, l3, l4];
 
-  tileTL = loadImage("assets/tileTL.png");
-  tileTR = loadImage("assets/tileTR.png");
-  tileT = loadImage("assets/tileTB.png");
-  tileB = loadImage("assets/tileTB.png");
-  tileL = loadImage("assets/tileL.png");
-  tileR = loadImage("assets/tileR.png");
-  tileBL = loadImage("assets/tileBL.png");
-  tileBR = loadImage("assets/tileBR.png");
-  tileTM = loadImage("assets/tileTM.png");
-  tileF = loadImage("assets/floor0.png");
-  tileF1 = loadImage("assets/floor1.png");
+  tileTL = loadImage("assets/tiles/tileTL.png"); // floor and wall tiles
+  tileTR = loadImage("assets/tiles/tileTR.png");
+  tileT = loadImage("assets/tiles/tileTB.png");
+  tileB = loadImage("assets/tiles/tileTB.png");
+  tileL = loadImage("assets/tiles/tileL.png");
+  tileR = loadImage("assets/tiles/tileR.png");
+  tileBL = loadImage("assets/tiles/tileBL.png");
+  tileBR = loadImage("assets/tiles/tileBR.png");
+  tileTM = loadImage("assets/tiles/tileTM.png");
+  tileTT = loadImage("assets/tiles/tileTT.png");
 
-  coinimg = loadImage("assets/coin.png");
-  healthimg = loadImage("assets/healthbar.png");
-  healthemptyimg = loadImage("assets/healthbarempty.png");
+  tileF = loadImage("assets/tiles/floor0.png");
+  tileF1 = loadImage("assets/tiles/floor1.png");
+  tileF2 = loadImage("assets/tiles/floor2.png");
+
+  coinimg = loadImage("assets/misc/coin.png"); // miscellaneous images
+  healthimg = loadImage("assets/misc/healthbar.png");
+  healthemptyimg = loadImage("assets/misc/healthbarempty.png");
+
+  pistolimage = loadImage("assets/misc/pistol.png")
+  shotgunimage = loadImage("assets/misc/shotgun.png")
+
+  pistolbulletimage = loadImage("assets/misc/pistol bullet.png")
+  shotgunbulletimage = loadImage("assets/misc/shotgun bullet.png")
+
+  playerimg = loadImage('assets/player/basic_idle_01.png')
 
   font = loadFont('assets/8bitfont.ttf');
-
-  idle1 = loadImage("assets/player/basic_idle01.png");
-  // idle2 = loadImage("assets/player/basic_idle02.png");
-  // idle3 = loadImage("assets/player/basic_idle03.png");
-  // idle4 = loadImage("assets/player/basic_idle04.png");
 }
 
-let theLevels1;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -101,7 +110,13 @@ function setup() {
   player.collider = "k"
   player.health = 6;
   player.healthtotal = 6;
-  // player.addAni('idle', 'assets/player/basic_idle01.png', 3)
+
+  player.addAni('idle', 'assets/player/basic_idle_01.png', 3)
+  player.addAni('run', 'assets/player/basic_running_01.png', 2)
+
+  player.width = playerimg.width/2
+  player.height = playerimg.height/2
+  player.ani.frameDelay = 15
 
   coinimg.width = coinimg.width/4
   coinimg.height = coinimg.height/4
@@ -110,12 +125,18 @@ function setup() {
   healthemptyimg.width = healthemptyimg.width/2
   healthemptyimg.height = healthemptyimg.height/2
 
+  pistolimage.width = pistolimage.width/4
+  pistolimage.height = pistolimage.height/4
+  shotgunimage.width = shotgunimage.width/2
+  shotgunimage.height = shotgunimage.height/2
+
   // makeRoom();
 
   room = l0;
 
   pistol = new Sprite(player.x + player.width, player.y, 20, 10, "n")
   pistol.color = (86, 86, 86)
+  pistol.image = pistolimage
 
   pistol.magazine = 12
   pistol.ammo = 12
@@ -128,6 +149,7 @@ function setup() {
 
   shotgun = new Sprite(player.x + player.width, player.y, 17, 13, "n")
   shotgun.color = (102, 57, 19)
+  shotgun.image = shotgunimage
 
   shotgun.magazine = 4
   shotgun.ammo = 4
@@ -241,31 +263,48 @@ function moveCharacter(){
 
   if(player.y + player.height/2 < height && player.y - player.height/2 > 0) {
     if(room[playeryPos][playerxPos] === 1 || room[playeryPos2][playerxPos] === 1 || room[playeryPos][playerxPos2] === 1 || room[playeryPos2][playerxPos2] === 1) { // if touching wall
-      player.x -= player.vel.x
+      player.x -= player.vel.x // repels you from wall
       player.y -= player.vel.y
     }
   }
 
   if (kb.pressing('W')) { //up
     player.vel.y = -speed;
+    player.ani = 'run'
+    player.ani.frameDelay = 15
   }
 
   if (kb.pressing('A')) { //left
     player.vel.x = -speed;
+    player.mirror.x = true
+    for(i = 0; i < guns.length; i ++) {
+      guns[i].mirror.x = true
+    }
+    player.ani = 'run'
+    player.ani.frameDelay = 15
   }
 
   if (kb.pressing('S')) { //down
     player.vel.y = speed;
+    player.ani = 'run'
+    player.ani.frameDelay = 15
   }
 
   if (kb.pressing('D')) { //right
     player.vel.x = speed;
+    player.mirror.x = false
+    for(i = 0; i < guns.length; i ++) { // turns gun with player
+      guns[i].mirror.x = false
+    }
+    player.ani = 'run'
+    player.ani.frameDelay = 15
   }
 
   if (!keyIsPressed) { // dont move if nothing is pressed
     player.vel.x = 0;
     player.vel.y = 0;
     player.ani = 'idle'
+    player.ani.frameDelay = 15
   }
 
   if(player.x >= width || player.x <= 0 || player.y >= height || player.y <= 0) {
@@ -307,36 +346,34 @@ function spawnEnemies() {
 
     enemy.yPos2 = Math.floor((enemy.y + enemy.height/2)/cellHeight);
 
-    while (!(enemy.xPos > 0 && enemy.yPos > 0 && enemy.yPos2 < ROWS - 1 && enemy.xPos2 < COLS - 1)) {
+    while (!(enemy.xPos > 0 && enemy.yPos > 0 && enemy.yPos2 < ROWS - 1 && enemy.xPos2 < COLS - 1) || room[enemy.yPos][enemy.xPos] === 1 || room[enemy.yPos2][enemy.xPos] === 1 || room[enemy.yPos][enemy.xPos2] === 1 || room[enemy.yPos2][enemy.xPos2] === 1) {
       enemy.x = random(0 + enemyWidth, width - enemyWidth)
       enemy.y = random(0 + enemyWidth, height - enemyWidth)
 
-      enemy.xPos = Math.floor((enemy.x - enemy.width)/cellWidth);
+      enemy.xPos = Math.floor((enemy.x - enemy.width/2)/cellWidth);
 
-      enemy.yPos = Math.floor((enemy.y - enemy.height)/cellHeight);
+      enemy.yPos = Math.floor((enemy.y - enemy.height/2)/cellHeight);
   
-      enemy.xPos2 = Math.floor((enemy.x + enemy.width)/cellWidth);
+      enemy.xPos2 = Math.floor((enemy.x + enemy.width/2)/cellWidth);
   
-      enemy.yPos2 = Math.floor((enemy.y + enemy.height)/cellHeight);
+      enemy.yPos2 = Math.floor((enemy.y + enemy.height/2)/cellHeight);
     }
 
-    // console.log("wall", i, room[enemy.yPos][enemy.xPos], room[enemy.yPos2][enemy.xPos], room[enemy.yPos][enemy.xPos2], room[enemy.yPos2][enemy.xPos2])
+    // while (room[enemy.yPos][enemy.xPos] === 1 || room[enemy.yPos2][enemy.xPos] === 1 || room[enemy.yPos][enemy.xPos2] === 1 || room[enemy.yPos2][enemy.xPos2] === 1) {
 
-    while (room[enemy.yPos][enemy.xPos] === 1 || room[enemy.yPos2][enemy.xPos] === 1 || room[enemy.yPos][enemy.xPos2] === 1 || room[enemy.yPos2][enemy.xPos2] === 1) {
+    //   enemy.x = random(enemyWidth, width - enemyWidth)
+    //   enemy.y = random(enemyWidth, height - enemyWidth)
 
-      enemy.x = random(enemyWidth, width - enemyWidth)
-      enemy.y = random(enemyWidth, height - enemyWidth)
-
-      enemy.xPos = Math.floor((enemy.x - enemy.width)/cellWidth);
+    //   enemy.xPos = Math.floor((enemy.x - enemy.width)/cellWidth);
   
-      enemy.yPos = Math.floor((enemy.y - enemy.height)/cellHeight);
+    //   enemy.yPos = Math.floor((enemy.y - enemy.height)/cellHeight);
     
-      enemy.xPos2 = Math.floor((enemy.x + enemy.width)/cellWidth);
+    //   enemy.xPos2 = Math.floor((enemy.x + enemy.width)/cellWidth);
     
-      enemy.yPos2 = Math.floor((enemy.y + enemy.height)/cellHeight);
+    //   enemy.yPos2 = Math.floor((enemy.y + enemy.height)/cellHeight);
 
-      // console.log("wall", i, room[enemy.yPos][enemy.xPos], room[enemy.yPos2][enemy.xPos], room[enemy.yPos][enemy.xPos2], room[enemy.yPos2][enemy.xPos2])
-    }
+    //   // console.log("wall", i, room[enemy.yPos][enemy.xPos], room[enemy.yPos2][enemy.xPos], room[enemy.yPos][enemy.xPos2], room[enemy.yPos2][enemy.xPos2])
+    // }
 
 
     enemy.speed = 1;
@@ -362,17 +399,15 @@ function spawnEnemies() {
 
 function enemyKilled() { // enemy bullet collision check
   for(let i = theEnemies.length - 1; i >= 0; i--) {
-    if(theEnemies.length > 0) {
-      theEnemies[i].color = theEnemies[i].oldcolor 
-    }
-
+    theEnemies[i].color = theEnemies[i].oldcolor 
     for(let k = theBullets.length - 1; k >= 0; k--) {
-
+      console.log(theEnemies[i])
       if (theBullets[k].overlaps(theEnemies[i]) && millis() - enemy.inv > 80) {
-        theEnemies[i].health -= theBullets[k].strength;
-        theEnemies[i].color = ("orange")
+        bulletstrength = theBullets[k].strength
         theBullets[k].remove();
         theBullets.splice(k, 1);
+        theEnemies[i].health -= bulletstrength;
+        theEnemies[i].color = ("orange")
         enemy.inv = millis()    
       }
 
@@ -390,20 +425,21 @@ function enemyKilled() { // enemy bullet collision check
 
 function checkCollide() { // player collides with enemy
   for(let i = theEnemies.length - 1; i >= 0; i--) {
-    for(let k = theBullets.length - 1; k >= 0; k--) {
-      if (player.collides(theEnemies[i])){
+  if (player.collides(theEnemies[i])){
         player.health -= 1
       }
     }
   }
-}
+
 
 function shootBullet() { // spawns and moves bullets to cursor
+
   if(reloading === false) {
     if(gun === pistol && millis() - gun.fired > gun.firerate && gun.ammo > 0) {
       stroke("black")
       gun.ammo-- 
       bullet = new Sprite(gun.x + gun.width/2, gun.y, 10);
+      bullet.image = pistolbulletimage
       bullet.collider = "k"
       bullet.strength = 1;
       bullet.speed = 10
@@ -412,13 +448,13 @@ function shootBullet() { // spawns and moves bullets to cursor
       theBullets.push(bullet);
       gun.fired = millis()
     }
-
     if(gun === shotgun && millis() - gun.fired > gun.firerate && gun.ammo > 0) {
       stroke("black")
       gun.ammo--
         for(let i = -2; i < 3; i++) {
           if (i !== 0) {
             bullet = new Sprite(gun.x + gun.width/2, player.y, 10);
+            bullet.image = shotgunbulletimage
             bullet.collider = "k"
             bullet.strength = 1;
             bullet.speed = 7
@@ -481,6 +517,7 @@ function makeRoom() { // creates blank room if needed
 function drawRoom() { // draws room based on tiles
   let cellWidth = width / COLS;
   let cellHeight = height / ROWS;
+
   for (let i = 0; i < ROWS; i++) {
     for (let k = 0; k < COLS; k++) {
       if (room[i][k] === 0) { // if tile = 0, color it white
@@ -496,8 +533,9 @@ function drawRoom() { // draws room based on tiles
         }
       }
 
-      if (room[i][k] === 1) { // if tile = 1, color it black
+      if (room[i][k] === 1) { // if tile = 1, draw a wall
         stroke(1)
+
         if (i === 0) {
           image(tileT, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
         }
@@ -529,27 +567,35 @@ function drawRoom() { // draws room based on tiles
           image(tileBL, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
         }
 
-        else if (room[i - 1][k] === 1 && room[i][k + 1] === 1 && room[i][k - 1] === 1 && room[i + 1][k] === 0) { // bottom
+        else if (room[i - 1][k] === 1 && room[i][k + 1] === 1 && room[i][k - 1] === 1 && room[i + 1][k] === 0) { // bottom surrounded
           image(tileB, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
         }
 
-        else if (room[i + 1][k] === 1 && room[i][k + 1] === 1 && room[i][k - 1] === 1 && room[i - 1][k] === 0) { // top
+        else if (room[i + 1][k] === 1 && room[i][k + 1] === 1 && room[i][k - 1] === 1 && room[i - 1][k] === 0) { // top surrounded
           image(tileT, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
         }
 
-        else if (room[i + 1][k] === 1 && room[i - 1][k] === 1 && room[i][k + 1] === 1 && room[i][k - 1] === 0) { // left
+        else if (room[i + 1][k] === 1 && room[i - 1][k] === 1 && room[i][k + 1] === 1 && room[i][k - 1] === 0) { // left 
           image(tileL, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
         }
 
-        else if (room[i + 1][k] === 1 && room[i - 1][k] === 1 && room[i][k - 1] === 1 && room[i][k + 1] === 0) { // right
+        else if (room[i + 1][k] === 1 && room[i - 1][k] === 1 && room[i][k - 1] === 1 && room[i][k + 1] === 0) { // right 
           image(tileR, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
         }
 
-        else if (room[i + 1][k] === 0 && room[i - 1][k] === 0) { // right
+        else if (room[i + 1][k] === 0 && room[i - 1][k] === 0) { // no left and right
           image(tileT, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
         }
 
-        else { // floor 0
+        else if (room[i - 1][k] === 0 && room[i + 1][k] === 1 && room[i][k + 1] === 0 && room[i][k - 1] === 0) { // no left and right
+          image(tileTT, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+        else if (room[i - 1][k] === 1 && room[i + 1][k] === 0 && room[i][k + 1] === 0 && room[i][k - 1] === 0) { // no left and right
+          image(tileT, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+        else { // alone
           image(tileTM, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
         }
 
@@ -585,31 +631,31 @@ function moveEnemies() {
 
       if (theEnemies[i].xPos >= 0 && theEnemies[i].xPos2 <= COLS && theEnemies[i].yPos >= 0 && theEnemies[i].yPos2 <= ROWS){ // in boundaries 
 
-        if(wallAbove(theEnemies[i].xPos, theEnemies[i].yPos, theEnemies[i].xPos2, theEnemies[i].yPos2)) { // wall below or above
-          if (player.x / theEnemies[i].x > 1 ) { // enemy is left of player
-            theEnemies[i].vel.x = 1 // move right
-          }
-          else if (player.x / theEnemies[i].x < 1) { // enemy is right of player
-            theEnemies[i].vel.x = -1; // move left
-          }
-          if (player.y === theEnemies[i].y) { // enemy is same y as player
-            theEnemies[i].vel.y = 1; // move right
-          }
-        }
+        // if(wallAbove(theEnemies[i].xPos, theEnemies[i].yPos, theEnemies[i].xPos2, theEnemies[i].yPos2)) { // wall below or above
+        //   if (player.x / theEnemies[i].x > 1 ) { // enemy is left of player
+        //     theEnemies[i].vel.x = 1 // move right
+        //   }
+        //   else if (player.x / theEnemies[i].x < 1) { // enemy is right of player
+        //     theEnemies[i].vel.x = -1; // move left
+        //   }
+        //   if (player.y === theEnemies[i].y) { // enemy is same y as player
+        //     theEnemies[i].vel.y = 1; // move right
+        //   }
+        // }
 
-        else if(wallRight(theEnemies[i].xPos, theEnemies[i].yPos, theEnemies[i].xPos2, theEnemies[i].yPos2)) { // wall below or above
-          if (player.y / theEnemies[i].y > 1) { // enemy is above player
-            theEnemies[i].vel.y = 1 // move down
-            }
-          else if (player.y / theEnemies[i].y < 1) { // enemy is below player
-            theEnemies[i].vel.y = -1; // move up
-            }
-          if (player.x === theEnemies[i].x) { // enemy is same x as player
-            theEnemies[i].vel.x = 1; // move right
-          }
-        }
+        // else if(wallSides(theEnemies[i].xPos, theEnemies[i].yPos, theEnemies[i].xPos2, theEnemies[i].yPos2)) { // wall below or above
+        //   if (player.y / theEnemies[i].y > 1) { // enemy is above player
+        //     theEnemies[i].vel.y = 1 // move down
+        //     }
+        //   else if (player.y / theEnemies[i].y < 1) { // enemy is below player
+        //     theEnemies[i].vel.y = -1; // move up
+        //     }
+        //   if (player.x === theEnemies[i].x) { // enemy is same x as player
+        //     theEnemies[i].vel.x = 1; // move right
+        //   }
+        // }
 
-        else { //no walls nearby, free movement
+        // else { //no walls nearby, free movement
           if (player.x / theEnemies[i].x > 1) { // enemy is left of player
             theEnemies[i].vel.x = 1 // move right
           }
@@ -624,19 +670,18 @@ function moveEnemies() {
           }
         }
       }
-    }
-    else { // touching a wall
-      theEnemies[i].vel.x = -theEnemies[i].vel.x
-      theEnemies[i].vel.y = -theEnemies[i].vel.y
+      else { // touching a wall
+        theEnemies[i].vel.x = -theEnemies[i].vel.x
+        theEnemies[i].vel.y = -theEnemies[i].vel.y
+      }
     }
   }
-}
 
 function wallAbove(left, top, right, bottom) {
   return room[top - 1][right] === 1 || room[bottom + 1][right] === 1 || room[bottom + 1][left] === 1 || room[top - 1][left] === 1;
 }
 
-function wallRight(left, top, right, bottom) {
+function wallSides(left, top, right, bottom) {
   return room[top][right + 1] === 1 || room[bottom][right + 1] === 1 || room[bottom][left - 1] === 1 || room[top][left - 1] === 1;
 }
 
@@ -684,6 +729,7 @@ function changeRoom() { // if you go through a door, change the room
 
 function newRoom() { // closes door behind you and spawns enemies
   if (newr === true) { // start timer
+    theBullets = []
     time = millis()
     newr = false
   }
@@ -761,18 +807,33 @@ function drawStuff() {
   stroke("white") // gun display
   strokeWeight(1)
   fill(80, 80, 80, 80)
-  rect(width - cellWidth * 5, height - cellHeight * 4, cellWidth * 4, cellHeight * 2.7)
+  rect(width - cellWidth * 5, height - cellHeight * 4.5, cellWidth * 4, cellHeight * 3)
 
-  noStroke() // ammo count
+  stroke("black") // ammo count
+  strokeWeight(4)
   fill(255, 255, 255)
   text(gun.ammo + "/" + gun.magazine, width - cellWidth * 5, height - 15)
 
+  if(gun === pistol) {
+    image(pistolimage, width - cellWidth * 4.5, height - cellHeight * 4, pistolimage.width * 3, pistolimage.height * 3)
+    23162
+  }
+
+  if(gun === shotgun) {
+    image(shotgunimage, width - cellWidth * 4.5, height - cellHeight * 4, shotgunimage.width * 3, shotgunimage.height * 3)
+    23162
+  }
+
   strokeWeight(1)
-  stroke("black")
 
   for (let i = 0; i < guns.length; i++) { // draw gun next to player
-    guns[i].x = player.x + player.width
-    guns[i].y = player.y
+    if(player.vel.x > 0) {
+      guns[i].x = player.x + player.width/2
+    }
+    else if (player.vel.x < 0) {
+      guns[i].x = player.x - player.width/2
+    }
+    guns[i].y = player.y + player.width/5
     if (guns[i] !== gun) {
       guns[i].visible = false
     }
