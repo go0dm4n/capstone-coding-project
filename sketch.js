@@ -39,7 +39,9 @@ let rolling = false;
 
 let minEn = 1
 let maxEn = 6
-let money = 10;
+
+let money = 0;
+let keys = 0
 
 const COLS = 40
 const ROWS = 20
@@ -123,7 +125,7 @@ function setup() {
   cellHeight = height / ROWS;
 
   player = new Sprite(width/2, height/2);
-  player.collider = "k"
+  player.collider = "n"
   player.health = 6;
   player.healthtotal = 6;
   player.movespeed = 3;
@@ -393,7 +395,7 @@ function spawnEnemies() {
 
   for(let i = Math.floor(random(minEn, maxEn)); i >= 0 ; i--) {
 
-    enemy = new Sprite(random(enemyWidth, width - enemyWidth), random(enemyWidth, height - enemyWidth),"d");
+    enemy = new Sprite(random(enemyWidth, width - enemyWidth), random(enemyWidth, height - enemyWidth),"k");
 
     enemy.xPos = Math.floor((enemy.x - enemy.width/2)/cellWidth);
 
@@ -469,12 +471,10 @@ function enemyKilled() { // enemy bullet collision check
       }
 
       if (theEnemies[i].health <= 0) {
-        coin = new Sprite(theEnemies[i].x, theEnemies[i].y);
+        coin = new Sprite(theEnemies[i].x, theEnemies[i].y, 'k');
         coin.addAni('sit', 'assets/misc/coin01.png', 4)
         coin.ani = 'sit'
         coin.ani.frameDelay = 10
-        coin.img.width = coinimg.width
-        coin.width = 10
 
         theEnemies[i].remove();
         theEnemies.splice(i, 1);
@@ -504,7 +504,7 @@ function shootBullet() { // spawns and moves bullets to cursor
       gun.ammo-- 
       bullet = new Sprite(gun.x + gun.width/2, gun.y, 10);
       bullet.image = pistolbulletimage
-      bullet.collider = "k"
+      bullet.collider = "d"
       bullet.strength = 1;
       bullet.speed = 10
       bullet.color = (80, 80, 80)
@@ -554,7 +554,7 @@ function pickupItems() {
   for (let i = theCoins.length - 1; i >= 0; i--){
     theCoins[i].vel.x = 0 // prevent coins from moving off screen due to colliders malfunctioning
     theCoins[i].vel.y = 0
-    if(theCoins[i].overlaps(player)) { // if player touches a coin
+    if(player.overlaps(theCoins[i])) { // if player touches a coin
       theCoins[i].remove(); // delete sprite & remove from array
       theCoins.splice(i,1);
       money += 1;
@@ -747,53 +747,45 @@ function moveEnemies() {
 
     if(touchingWall(theEnemies[i].xPos, theEnemies[i].yPos, theEnemies[i].xPos2, theEnemies[i].yPos2)) { // if not touching wall
 
-      if (theEnemies[i].xPos >= 0 && theEnemies[i].xPos2 <= COLS && theEnemies[i].yPos >= 0 && theEnemies[i].yPos2 <= ROWS){ // in boundaries 
-
-        // if(wallAbove(theEnemies[i].xPos, theEnemies[i].yPos, theEnemies[i].xPos2, theEnemies[i].yPos2)) { // wall below or above
-        //   if (player.x / theEnemies[i].x > 1 ) { // enemy is left of player
-        //     theEnemies[i].vel.x = 1 // move right
-        //   }
-        //   else if (player.x / theEnemies[i].x < 1) { // enemy is right of player
-        //     theEnemies[i].vel.x = -1; // move left
-        //   }
-        //   if (player.y === theEnemies[i].y) { // enemy is same y as player
-        //     theEnemies[i].vel.y = 1; // move right
-        //   }
-        // }
-
-        // else if(wallSides(theEnemies[i].xPos, theEnemies[i].yPos, theEnemies[i].xPos2, theEnemies[i].yPos2)) { // wall below or above
-        //   if (player.y / theEnemies[i].y > 1) { // enemy is above player
-        //     theEnemies[i].vel.y = 1 // move down
-        //     }
-        //   else if (player.y / theEnemies[i].y < 1) { // enemy is below player
-        //     theEnemies[i].vel.y = -1; // move up
-        //     }
-        //   if (player.x === theEnemies[i].x) { // enemy is same x as player
-        //     theEnemies[i].vel.x = 1; // move right
-        //   }
-        // }
-
-        // else { //no walls nearby, free movement
-          if (player.x / theEnemies[i].x > 1) { // enemy is left of player
+      if (player.x > theEnemies[i].x) { // enemy is left of player
             theEnemies[i].vel.x = 1 // move right
-          }
-          else if (player.x / theEnemies[i].x < 1) { // enemy is right of player
+        }
+      else if (player.x < theEnemies[i].x) { // enemy is right of player
             theEnemies[i].vel.x = -1; // move left
-          }
-          if (player.y / theEnemies[i].y > 1) { // enemy is above player
+        }
+      if (player.y > theEnemies[i].y) { // enemy is above player
             theEnemies[i].vel.y = 1 // move down
-          }
-          else if (player.y / theEnemies[i].y < 1) { // enemy is below player
+        }
+      else if (player.y < theEnemies[i].y) { // enemy is below player
             theEnemies[i].vel.y = -1; // move up
-          }
         }
       }
+
       else { // touching a wall
-        theEnemies[i].vel.x = -theEnemies[i].vel.x
-        theEnemies[i].vel.y = -theEnemies[i].vel.y
-      }
+        if (theEnemies[i].x > player.x) {
+          theEnemies[i].vel.x = -1
+          theEnemies[i].vel.y -= theEnemies[i].vel.y
+
+        }
+        if (theEnemies[i].x < player.x) {
+          theEnemies[i].vel.x = 1
+          theEnemies[i].vel.y -= theEnemies[i].vel.y
+        }
+
+        if (theEnemies[i].y > player.y) {
+          theEnemies[i].vel.y = -1
+          theEnemies[i].vel.x -= theEnemies[i].vel.x
+
+        }
+
+        if (theEnemies[i].y < player.y) {
+          theEnemies[i].vel.y = 1
+          theEnemies[i].vel.x -= theEnemies[i].vel.x
+
+        }
     }
   }
+}
 
 function wallAbove(left, top, right, bottom) {
   return room[top - 1][right] === 1 || room[bottom + 1][right] === 1 || room[bottom + 1][left] === 1 || room[top - 1][left] === 1;
@@ -805,6 +797,14 @@ function wallSides(left, top, right, bottom) {
 
 function touchingWall(left, top, right, bottom) {
   return room[top][left] !== 1 && room[bottom][left] !== 1 && room[top][right] !== 1 && room[bottom][right] !== 1;
+}
+
+function touchingTop(left, top, right, bottom) {
+  return room[top][left] !== 1 && room[bottom][left] !== 1 && room[top][right] !== 1 && room[bottom][right] !== 1;
+}
+
+function touchingBottom(left, top, right, bottom) {
+  return room[bottom][3] !== 1 && room[bottom][left];
 }
 
 function mapPosition() { // finds where you are on the map
@@ -1004,7 +1004,7 @@ function reload() { // if R is pressed, after a certain amount of time refill ma
       rect(player.x - player.width * 1.1, player.y - player.height * 1.1, player.width * 2.2, player.height / 5)
       fill("green");
       noStroke()
-      rect(player.x - player.width * 1.1, player.y - player.height * 1.1, ((millis() - gun.reload) * (gun.magazine)) / (player.width * 1.1), player.height / 5)
+      rect(player.x - player.width * 1.1, player.y - player.height * 1.1, ((millis() - gun.reload) / (player.width * 1.1)), player.height / 5)
     }
 
     if (millis() - gun.reload > gun.reloadtime) { // fills gun with bullets
@@ -1064,17 +1064,25 @@ function doShop() {
 function buyItems() {
   for(let i = shopItems.length - 1; i >=0; i--) {
     for(let k = shopItems[i].length - 1; k >=0; k--) {
-      if(dist(player.x,  player.y, shopItems[i][k].x, shopItems[i][k].y) < 100) { // if close to displayed item
+      if(dist(player.x,  player.y, shopItems[i][k].x, shopItems[i][k].y) < 100 && shopItems[i][k].visible === true) { // if close to displayed item
 
         textSize(cellWidth/2); // display item cost
         textFont(font);
         text(shopItems[i][k].value, shopItems[i][k].x - cellWidth/4 + shopItems[i][k].width/4, shopItems[i][k].y - cellHeight/2);
 
-        if(keyCode === 69 && money >= shopItems[i][k].value) { // take away money
+        if(keyCode === 66 && money >= shopItems[i][k].value) { // take away money
           money -= shopItems[i][k].value;
+
           if (shopItems[i][k] === heart) { // buy heart
             player.health += 2
-            console.log("ba")
+          }
+          
+          if (shopItems[i][k] === halfheart) { // buy halfheart
+            player.health += 1
+          }
+
+          if (shopItems[i][k] === key) { // buy key
+            keys += 1
           }
 
           shopItems[i][k].remove() // get rid of item
@@ -1089,18 +1097,18 @@ function dodgeRoll() {
   if(rolling === true) {
     velx = player.vel.x
     vely = player.vel.y
-
+    console.log(velx, vely)
     if(millis() - player.rolling < player.rolltime) { // makes you invulnerable for a small while
       player.iframes2 = millis()
       if(velx === 0 && vely === 0) { // standing still
         if(player.mirror.x === true) {
-          player.moveTo(player.x - player.movespeed * 20, player.y + vely * 20, 6) // left
+          player.moveTo(player.x - player.movespeed * 20, player.y + vely * 20, 8) // left
         }
         else{
-          player.moveTo(player.x + player.movespeed * 20, player.y + vely * 20, 6) // right
+          player.moveTo(player.x + player.movespeed * 20, player.y + vely * 20, 8) // right
         }
       }
-      player.moveTo(player.x + velx * 20, player.y + vely * 20, 6)
+      player.moveTo(player.x + velx * 20, player.y + vely * 20, 8)
       player.mirror.y = true
     }
 
