@@ -1089,14 +1089,15 @@ function dodgeRoll() {
   if(rolling === true) {
     velx = player.vel.x
     vely = player.vel.y
+
     if(millis() - player.rolling < player.rolltime) { // makes you invulnerable for a small while
       player.iframes2 = millis()
-      if(velx === 0 && vely === 0) {
+      if(velx === 0 && vely === 0) { // standing still
         if(player.mirror.x === true) {
-          player.moveTo(player.x - player.movespeed * 20, player.y + vely * 20, 6)
+          player.moveTo(player.x - player.movespeed * 20, player.y + vely * 20, 6) // left
         }
         else{
-          player.moveTo(player.x + player.movespeed * 20, player.y + vely * 20, 6)
+          player.moveTo(player.x + player.movespeed * 20, player.y + vely * 20, 6) // right
         }
       }
       player.moveTo(player.x + velx * 20, player.y + vely * 20, 6)
