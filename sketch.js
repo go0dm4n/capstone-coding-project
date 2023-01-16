@@ -15,10 +15,11 @@ let guns;
 let theEnemies = [];
 let yourBullets = [];
 let theCoins = [];
+let heart, halfheart, key; 
+let itemTypes = ["heart", "halfheart", "key"];
+let shopItems = [[], [], []]
 
-let tileF1, tileF2
-
-let theTiles = [tileF1, tileF2]
+let gamestate;
 
 let player;
 
@@ -26,7 +27,7 @@ let map = [[0,0,0,0],
            [0,0,0,0],
            [0,0,0,0]]
 
-let l0, l1, l2, l3, l4;
+let l0, l1, l2, l3, l4, s1;
 
 let time;
 
@@ -34,12 +35,11 @@ let font;
 
 let newr = false;
 let reloading = false;
+let rolling = false;
 
 let minEn = 1
 let maxEn = 6
-let money = 0;
-
-let speed = 3;
+let money = 10;
 
 const COLS = 40
 const ROWS = 20
@@ -66,8 +66,9 @@ function preload() {
   l2 = loadJSON("level grids/1-2.json");
   l3 = loadJSON("level grids/1-3.json");
   l4 = loadJSON("level grids/1-4.json");
+  s1 = loadJSON("level grids/s-1.json");
 
-  theLevels1 = [l0, l1, l2, l3, l4];
+  theLevels1 = [l0, l1, l2, l3, l4, s1];
 
   tileTL = loadImage("assets/tiles/tileTL.png"); // floor and wall tiles
   tileTR = loadImage("assets/tiles/tileTR.png");
@@ -84,7 +85,22 @@ function preload() {
   tileF1 = loadImage("assets/tiles/floor1.png");
   tileF2 = loadImage("assets/tiles/floor2.png");
 
+  tileTA = loadImage("assets/tiles/table00.png");
+  tileTA1 = loadImage("assets/tiles/table01.png");
+  tileTA2 = loadImage("assets/tiles/table02.png");
+  tileTA3 = loadImage("assets/tiles/table03.png");
+  tileTA4 = loadImage("assets/tiles/table04.png");
+  tileTA5 = loadImage("assets/tiles/table05.png");
+  tileTA6 = loadImage("assets/tiles/table06.png");
+  tileTA7 = loadImage("assets/tiles/table07.png");
+  tileTA8 = loadImage("assets/tiles/table08.png");
+  tileTA9 = loadImage("assets/tiles/table09.png");
+
   coinimg = loadImage("assets/misc/coin.png"); // miscellaneous images
+  heartimg = loadImage("assets/misc/heart.png");
+  halfheartimg = loadImage("assets/misc/halfheart.png"); 
+  keyimg = loadImage("assets/misc/key.png"); 
+
   healthimg = loadImage("assets/misc/healthbar.png");
   healthemptyimg = loadImage("assets/misc/healthbarempty.png");
 
@@ -110,16 +126,34 @@ function setup() {
   player.collider = "k"
   player.health = 6;
   player.healthtotal = 6;
+  player.movespeed = 3;
 
-  player.addAni('idle', 'assets/player/basic_idle_01.png', 3)
-  player.addAni('run', 'assets/player/basic_running_01.png', 2)
+  player.iframes = 1000
+  player.iframes2 = 1001
+
+  player.rolltime = 300
+  player.rolling = 0
+
+  player.addAni('idle', 'assets/player/basic_idle_01.png', 3) // idle animation
+  player.addAni('run', 'assets/player/basic_running_01.png', 2) // running animation
 
   player.width = playerimg.width/2
   player.height = playerimg.height/2
   player.ani.frameDelay = 15
 
+  shopkeeper = new Sprite(width/4, cellHeight * 8);
+  shopkeeper.collider = "none"
+  shopkeeper.visible = false
+
   coinimg.width = coinimg.width/4
   coinimg.height = coinimg.height/4
+  heartimg.width = heartimg.width/4
+  heartimg.height = heartimg.height/4
+  halfheartimg.width = halfheartimg.width/4
+  halfheartimg.height = halfheartimg.height/4
+  keyimg.width = keyimg.width/4
+  keyimg.height = keyimg.height/4
+
   healthimg.width = healthimg.width/2
   healthimg.height = healthimg.height/2
   healthemptyimg.width = healthemptyimg.width/2
@@ -130,7 +164,9 @@ function setup() {
   shotgunimage.width = shotgunimage.width/2
   shotgunimage.height = shotgunimage.height/2
 
-  // makeRoom();
+  gamestate = "main"
+
+  makeRoom();
 
   room = l0;
 
@@ -169,11 +205,11 @@ function setup() {
   machinegun.reloadtime = 3000
   machinegun.reload = 3000
 
-  guns = [pistol, shotgun, machinegun]
+  guns = [pistol, shotgun, machinegun];
   gun = guns[0];
 
   makeMap(theLevels1)
-  l0.complete = true
+  l0.status = true
 }
 
 function makeMap(array) {
@@ -183,11 +219,13 @@ function makeMap(array) {
      n = Math.floor(random(0, array.length - 1))
       if(random(0, 100) < 80 && array.length > 0) {
         map[i][k] = array[n] // replace 0 in map with level
-        array[n].complete = "false"
+        array[n].status = "incomplete"
         array.splice(n, 1) // removes level from list of addable levels
         }
     }
   }
+
+  s1.status = "shop"
 
   for(let i = map.length - 1; i >= 0; i--) {
     for(let k = map[i].length - 1; k >= 0; k--) {
@@ -238,10 +276,10 @@ function draw() {
   moveCharacter();
 
   mapX, mapY = mapPosition()
-  enemyKilled();
 
+  enemyKilled();
   checkCollide();
-  pickupItems();
+
   drawRoom();
   drawStuff()
 
@@ -252,6 +290,11 @@ function draw() {
   roomComplete()
 
   reload()
+
+  pickupItems();
+  buyItems();
+
+  dodgeRoll()
 }
 
 function moveCharacter(){
@@ -261,21 +304,29 @@ function moveCharacter(){
   playerxPos2 = Math.floor((player.x + player.width/2)/cellWidth);
   playeryPos2 = Math.floor((player.y + player.height/2)/cellHeight);
 
+  if (room.status !== "in progress") { // if there arent enemies make the player faster
+    player.movespeed = 4.5
+  }
+
+  else {
+    player.movespeed = 3
+  }
+
   if(player.y + player.height/2 < height && player.y - player.height/2 > 0) {
-    if(room[playeryPos][playerxPos] === 1 || room[playeryPos2][playerxPos] === 1 || room[playeryPos][playerxPos2] === 1 || room[playeryPos2][playerxPos2] === 1) { // if touching wall
+    if(room[playeryPos][playerxPos] > 0 || room[playeryPos2][playerxPos] > 0 || room[playeryPos][playerxPos2] > 0 || room[playeryPos2][playerxPos2] > 0) { // if touching wall
       player.x -= player.vel.x // repels you from wall
       player.y -= player.vel.y
     }
   }
 
-  if (kb.pressing('W')) { //up
-    player.vel.y = -speed;
+  if (kb.pressing('W') && rolling === false) { //up
+    player.vel.y = -(player.movespeed);
     player.ani = 'run'
     player.ani.frameDelay = 15
   }
 
-  if (kb.pressing('A')) { //left
-    player.vel.x = -speed;
+  if (kb.pressing('A') && rolling === false) { //left
+    player.vel.x = -(player.movespeed);
     player.mirror.x = true
     for(i = 0; i < guns.length; i ++) {
       guns[i].mirror.x = true
@@ -284,14 +335,14 @@ function moveCharacter(){
     player.ani.frameDelay = 15
   }
 
-  if (kb.pressing('S')) { //down
-    player.vel.y = speed;
+  if (kb.pressing('S') && rolling === false) { //down
+    player.vel.y = player.movespeed;
     player.ani = 'run'
     player.ani.frameDelay = 15
   }
 
-  if (kb.pressing('D')) { //right
-    player.vel.x = speed;
+  if (kb.pressing('D') && rolling === false) { //right
+    player.vel.x = player.movespeed;
     player.mirror.x = false
     for(i = 0; i < guns.length; i ++) { // turns gun with player
       guns[i].mirror.x = false
@@ -300,7 +351,7 @@ function moveCharacter(){
     player.ani.frameDelay = 15
   }
 
-  if (!keyIsPressed) { // dont move if nothing is pressed
+  if (!keyIsPressed && rolling === false) { // dont move if nothing is pressed
     player.vel.x = 0;
     player.vel.y = 0;
     player.ani = 'idle'
@@ -331,11 +382,17 @@ function keyPressed() {
     gun.reload = millis()
     reloading = true
   }
+
+  if(keyCode === 69) {
+    player.rolling = millis()
+    rolling = true;
+  }
 }
 
 function spawnEnemies() {
 
   for(let i = Math.floor(random(minEn, maxEn)); i >= 0 ; i--) {
+
     enemy = new Sprite(random(enemyWidth, width - enemyWidth), random(enemyWidth, height - enemyWidth),"d");
 
     enemy.xPos = Math.floor((enemy.x - enemy.width/2)/cellWidth);
@@ -379,11 +436,11 @@ function spawnEnemies() {
     enemy.speed = 1;
     enemy.health = (Math.floor(random(1, 3)));
 
-    if(enemy.health = 1) {
+    if(enemy.health === 1) {
       enemy.oldcolor = "red";
       enemy.color = "red";
     }
-    if(enemy.health = 2) {
+    if(enemy.health === 2) {
       enemy.oldcolor = "blue";
       enemy.color = "blue";
     }
@@ -401,32 +458,39 @@ function enemyKilled() { // enemy bullet collision check
   for(let i = theEnemies.length - 1; i >= 0; i--) {
     theEnemies[i].color = theEnemies[i].oldcolor 
     for(let k = theBullets.length - 1; k >= 0; k--) {
-      console.log(theEnemies[i])
       if (theBullets[k].overlaps(theEnemies[i]) && millis() - enemy.inv > 80) {
-        bulletstrength = theBullets[k].strength
+        theEnemies[i].health -= theBullets[k].strength;
+        theEnemies[i].color = ("orange")
+
         theBullets[k].remove();
         theBullets.splice(k, 1);
-        theEnemies[i].health -= bulletstrength;
-        theEnemies[i].color = ("orange")
+
         enemy.inv = millis()    
       }
 
       if (theEnemies[i].health <= 0) {
         coin = new Sprite(theEnemies[i].x, theEnemies[i].y);
-        coin.image = coinimg
+        coin.addAni('sit', 'assets/misc/coin01.png', 4)
+        coin.ani = 'sit'
+        coin.ani.frameDelay = 10
+        coin.img.width = coinimg.width
+        coin.width = 10
+
         theEnemies[i].remove();
         theEnemies.splice(i, 1);
-        coin.color = 'yellow';
         theCoins.push(coin);
+        
+        k = 0
       }
     }
   }
 }
 
-function checkCollide() { // player collides with enemy
+function checkCollide() { // player collision
   for(let i = theEnemies.length - 1; i >= 0; i--) {
-  if (player.collides(theEnemies[i])){
-        player.health -= 1
+  if (player.collides(theEnemies[i]) && millis() - player.iframes2 > player.iframes){ // player collides with enemy body
+        player.health -= 1 //reduce health
+        player.iframes2 = millis()
       }
     }
   }
@@ -509,7 +573,12 @@ function makeRoom() { // creates blank room if needed
   for (let i = 0; i < ROWS; i++) {
     room.push([]);
     for (let k = 0; k < COLS; k++) {
+      if (k === 0 || i === 0 || k === COLS - 1 || i === ROWS - 1) {
+        room[i].push(1);
+      }
+      else {
       room[i].push(0);
+      }
     }
   }
 }
@@ -599,10 +668,53 @@ function drawRoom() { // draws room based on tiles
           image(tileTM, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
         }
 
-      }   
+      } 
+
+      if (room[i][k] === 2) {
+
+        if(room[i][k - 1] === 2 && room[i + 1][k] === 2 && room[i][k + 1] === 2 && room[i - 1][k] !== 2) { // top middle
+          image(tileTA5, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }        
+        
+        else if(room[i][k + 1] ==! 2 && room[i][k - 1] === 2 && room[i + 1][k] === 2 && room[i - 1][k] === 2) { // vertical right
+          image(tileTA3, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+        else if(room[i][k - 1] ==! 2 && room[i][k + 1] === 2 && room[i + 1][k] === 2 && room[i - 1][k] === 2) { // vertical left
+          image(tileTA8, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+        else if(room[i][k - 1] === 2 && room[i - 1][k] === 2 && room[i][k + 1] !== 2) { // bottom right
+          image(tileTA2, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+        else if(room[i][k + 1] === 2 && room[i - 1][k] === 2 && room[i][k - 1] !== 2) { // bottom left
+          image(tileTA4, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+        else if(room[i][k + 1] === 2 && room[i + 1][k] === 2 && room[i - 1][k] !== 2) { // top left
+          image(tileTA6, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+        else if(room[i][k - 1] === 2 && room[i + 1][k] === 2 && room[i][k + 1] !== 2) { // top right
+          image(tileTA7, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+        else if(room[i][k - 1] === 2 && room[i + 1][k] === 2 && room[i][k + 1] === 2 && room[i - 1][k] === 2) { // center
+          image(tileTA9, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+
+        else { // horizontal
+          image(tileTA1, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+        }
+      }
+
+      if (room[i][k] === 3) {
+        image(tileTA, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
+      }
+
     }
   }
-
 }
 
 function changeTile(){ // room editing tool
@@ -612,8 +724,14 @@ function changeTile(){ // room editing tool
     room[yPos][xPos] = 1;
   }
   else if (room[yPos][xPos] === 1) {
-    room[yPos][xPos] = 0;
+    room[yPos][xPos] = 2;
   }   
+  else if (room[yPos][xPos] === 2) {
+    room[yPos][xPos] = 3;
+  } 
+  else if (room[yPos][xPos] === 3) {
+    room[yPos][xPos] = 0;
+  }    
 }
 
 function moveEnemies() {
@@ -707,35 +825,69 @@ function changeRoom() { // if you go through a door, change the room
   if (player.x >= width) { // right
     room = map[mapY][mapX + 1]
     player.x = player.width/2
+    if(room.status === "shopping") {
+      room.status = "shop"
+    }
   }
 
   if (player.x <= 0) { // left
     room = map[mapY][mapX - 1]
     player.x = width - player.width/2
+    if(room.status === "shopping") {
+      room.status = "shop"
+    }
   }
 
   if (player.y >= height) { // down
     room = map[mapY + 1][mapX]
     player.y = player.height/2
+    if(room.status === "shopping") {
+      room.status = "shop"
+    }
   }
 
   if (player.y <= 0) { // up
     room = map[mapY - 1][mapX]
     player.y = height - player.height/2
+    if(room.status === "shopping") {
+      room.status = "shop"
+    }
   }
 
   newr = true
 }
 
-function newRoom() { // closes door behind you and spawns enemies
+function newRoom() { // closes door behind you and spawns enemie
+
   if (newr === true) { // start timer
-    theBullets = []
+    for (let i = theBullets.length - 1; i >=0; i--) { // removes all bullets on screen
+      theBullets[i].remove()
+      theBullets.splice(i, 1)
+    }
+
     time = millis()
     newr = false
+
+    shopkeeper.visible = false
+
+    if (room.status === "shop") {
+      doShop()
+    }
+
+    else {
+      for(let i = shopItems[0].length - 1; i >= 0; i--) { // make hearts invisible
+        shopItems[0][i].visible = false
+      }
+  
+      for(let i = shopItems[1].length - 1; i >= 0; i--) { // make hearts visible
+        shopItems[1][i].visible = false
+      }
+    }
+
   }
 
-  if (millis() - time > 2000 && room.complete === "false") { // once it's been 2 seconds block the doors and spawn the enemies
-    room.complete = "in progress"
+  if (millis() - time > 2000 && room.status === "incomplete") { // once it's been 2 seconds block the doors and spawn the enemies
+    room.status = "in progress"
     blockade(room)
     spawnEnemies()
   }
@@ -776,8 +928,8 @@ function blockade(room) { // blocks the doors
 function roomComplete(){ // if all the enemies are dead
   for (let i = map.length - 1; i >= 0; i--) {
     for (let k = map[i].length - 1; k >= 0; k--) {
-      if (map[i][k] !== 0 && theEnemies.length === 0 && map[i][k].complete === "in progress") {
-        room.complete = "true"
+      if (map[i][k] !== 0 && theEnemies.length === 0 && map[i][k].status === "in progress") {
+        room.status = "complete"
           for (let i = 0; i < 20; i++) {
             for (let k = 0; k < room[i].length; k++) {
               room[i][k] = oldroom[i][k]
@@ -805,7 +957,7 @@ function drawStuff() {
   text(money, cellWidth*2, cellHeight * 3)
 
   stroke("white") // gun display
-  strokeWeight(1)
+  strokeWeight(3)
   fill(80, 80, 80, 80)
   rect(width - cellWidth * 5, height - cellHeight * 4.5, cellWidth * 4, cellHeight * 3)
 
@@ -815,12 +967,12 @@ function drawStuff() {
   text(gun.ammo + "/" + gun.magazine, width - cellWidth * 5, height - 15)
 
   if(gun === pistol) {
-    image(pistolimage, width - cellWidth * 4.5, height - cellHeight * 4, pistolimage.width * 3, pistolimage.height * 3)
+    image(pistolimage, width - cellWidth * 5 + (pistolimage.width * 1.5), height - cellHeight * 4.5 + (pistolimage.height * 1.5), pistolimage.width * 3, pistolimage.height * 3)
     23162
   }
 
   if(gun === shotgun) {
-    image(shotgunimage, width - cellWidth * 4.5, height - cellHeight * 4, shotgunimage.width * 3, shotgunimage.height * 3)
+    image(shotgunimage, width - cellWidth * 5, height - cellHeight * 4.5 + shotgunimage.height * 1.5, shotgunimage.width * 3, shotgunimage.height * 3)
     23162
   }
 
@@ -859,6 +1011,101 @@ function reload() { // if R is pressed, after a certain amount of time refill ma
         gun.ammo = gun.magazine
         gun.reload = millis()
         reloading = false
+    }
+  }
+}
+
+function doShop() {
+  room.status = "shopping"
+
+  shopkeeper.visible = true
+  if(shopItems[0].length === 0 && shopItems[1].length === 0 && shopItems[2].length === 0 ){
+    for(let i = ROWS - 1; i >= 0; i--) {
+      for(let k = room[i].length - 1; k >= 0; k--) {
+        if(room[i][k] === 3) {
+          randitem = itemTypes[Math.floor(random(0, itemTypes.length))]
+          console.log(randitem)
+  
+          if(randitem === "heart") {
+            heart = new Sprite(cellWidth * k + cellWidth/2, cellHeight * i + heartimg.height/2)
+            heart.value = 5
+            heart.img = heartimg
+            shopItems[0].push(heart)
+          }
+  
+          if (randitem === "halfheart") {
+            halfheart = new Sprite(cellWidth * k + cellWidth/2, cellHeight * i + halfheartimg.height/2)
+            halfheart.value = 3
+            halfheart.img = halfheartimg
+            shopItems[1].push(halfheart)
+          }
+
+          if (randitem === "key") {
+            key = new Sprite(cellWidth * k + cellWidth/2, cellHeight * i + keyimg.height/2)
+            key.value = 4
+            key.img = keyimg
+            shopItems[1].push(key)
+          }
+        }
+      }
+    }
+  }
+
+  for(let i = shopItems[0].length - 1; i >= 0; i--) { // show hearts
+    shopItems[0][i].visible = true
+  }
+
+  for(let i = shopItems[1].length - 1; i >= 0; i--) { // show half hearts
+    shopItems[1][i].visible = true
+  }
+
+}
+
+function buyItems() {
+  for(let i = shopItems.length - 1; i >=0; i--) {
+    for(let k = shopItems[i].length - 1; k >=0; k--) {
+      if(dist(player.x,  player.y, shopItems[i][k].x, shopItems[i][k].y) < 100) { // if close to displayed item
+
+        textSize(cellWidth/2); // display item cost
+        textFont(font);
+        text(shopItems[i][k].value, shopItems[i][k].x - cellWidth/4 + shopItems[i][k].width/4, shopItems[i][k].y - cellHeight/2);
+
+        if(keyCode === 69 && money >= shopItems[i][k].value) { // take away money
+          money -= shopItems[i][k].value;
+          if (shopItems[i][k] === heart) { // buy heart
+            player.health += 2
+            console.log("ba")
+          }
+
+          shopItems[i][k].remove() // get rid of item
+          shopItems[i].splice(k, 1)
+        }
+      }
+    }
+  }
+}
+
+function dodgeRoll() {
+  if(rolling === true) {
+    velx = player.vel.x
+    vely = player.vel.y
+    if(millis() - player.rolling < player.rolltime) { // makes you invulnerable for a small while
+      player.iframes2 = millis()
+      if(velx === 0 && vely === 0) {
+        if(player.mirror.x === true) {
+          player.moveTo(player.x - player.movespeed * 20, player.y + vely * 20, 6)
+        }
+        else{
+          player.moveTo(player.x + player.movespeed * 20, player.y + vely * 20, 6)
+        }
+      }
+      player.moveTo(player.x + velx * 20, player.y + vely * 20, 6)
+      player.mirror.y = true
+    }
+
+    if(millis() - player.rolling > player.rolltime) { // end invulnerability
+      rolling = false
+      player.mirror.y = false
     }
   }
 }
