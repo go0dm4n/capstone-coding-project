@@ -37,11 +37,11 @@ let newr = false;
 let reloading = false;
 let rolling = false;
 
-let minEn = 1
-let maxEn = 6
+let minEn = 0;
+let maxEn = 1;
 
 let money = 0;
-let keys = 0
+let keys = 0;
 
 const COLS = 40
 const ROWS = 20
@@ -312,24 +312,25 @@ function moveCharacter(){
     player.movespeed = 4.5
   }
 
-  else {
+  else { // fighting enemies
     player.movespeed = 3
   }
-
-    if(room[playeryPos][playerxPos] > 0 || room[playeryPos2][playerxPos] > 0 || room[playeryPos][playerxPos2] > 0 || room[playeryPos2][playerxPos2] > 0) { // if touching wall
+  if(player.y + player.height/2 < height && player.y - player.height/2 > 0) {
+   if(room[playeryPos][playerxPos] > 0 || room[playeryPos2][playerxPos] > 0 || room[playeryPos][playerxPos2] > 0 || room[playeryPos2][playerxPos2] > 0) { // if touching wall
       player.x -= player.vel.x // repels you from wall
       player.y -= player.vel.y
     }
+  }
 
   if (kb.pressing('W') && rolling === false) { //up
-    console.log(player.vel.x, player.vel.y)
+
     player.vel.y = -(player.movespeed);
     player.ani = 'run'
     player.ani.frameDelay = 15
   }
 
   if (kb.pressing('A') && rolling === false) { //left
-    console.log(player.vel.x, player.vel.y)
+
     player.vel.x = -(player.movespeed);
     player.mirror.x = true
     for(i = 0; i < guns.length; i ++) {
@@ -340,14 +341,12 @@ function moveCharacter(){
   }
 
   if (kb.pressing('S') && rolling === false) { //down
-    console.log(player.vel.x, player.vel.y)
     player.vel.y = player.movespeed;
     player.ani = 'run'
     player.ani.frameDelay = 15
   }
 
   if (kb.pressing('D') && rolling === false) { //right
-    console.log(player.vel.x, player.vel.y)
     player.vel.x = player.movespeed;
     player.mirror.x = false
     for(i = 0; i < guns.length; i ++) { // turns gun with player
@@ -476,10 +475,11 @@ function enemyKilled() { // enemy bullet collision check
       }
 
       if (theEnemies[i].health <= 0) {
-        coin = new Sprite(theEnemies[i].x, theEnemies[i].y, 'k');
+        coin = new Sprite(theEnemies[i].x, theEnemies[i].y, 'n');
         coin.addAni('sit', 'assets/misc/coin01.png', 4)
         coin.ani = 'sit'
         coin.ani.frameDelay = 10
+        coin.width = 5
 
         theEnemies[i].remove();
         theEnemies.splice(i, 1);
@@ -524,7 +524,7 @@ function shootBullet() { // spawns and moves bullets to cursor
           if (i !== 0) {
             bullet = new Sprite(gun.x + gun.width/2, player.y, 10);
             bullet.image = shotgunbulletimage
-            bullet.collider = "k"
+            bullet.collider = "d"
             bullet.strength = 1;
             bullet.speed = 7
             bullet.color = (80, 80, 80)
@@ -557,17 +557,10 @@ function trackBullet() { // bullet deletion
 
 function pickupItems() {
   for (let i = theCoins.length - 1; i >= 0; i--){
-    theCoins[i].vel.x = 0 // prevent coins from moving off screen due to colliders malfunctioning
-    theCoins[i].vel.y = 0
-    if(player.overlaps(theCoins[i])) { // if player touches a coin
+    // theCoins[i].vel.x = 0 // prevent coins from moving off screen due to colliders malfunctioning
+    // theCoins[i].vel.y = 0
+    if(theCoins[i].x < player.x + player.width/2 && theCoins[i].x > player.x - player.width/2 && theCoins[i].y < player.y + player.height/2 && theCoins[i].y > player.y - player.height/2) { // if player touches a coin
       theCoins[i].remove(); // delete sprite & remove from array
-      theCoins.splice(i,1);
-      money += 1;
-    }
-  }
-  if(newr === true) {
-    for(i = theCoins.length - 1; i >= 0; i--) { // if you enter a new room but there are still coins on the floor, auto collect the coins
-      theCoins[i].remove();
       theCoins.splice(i,1);
       money += 1;
     }
@@ -768,22 +761,26 @@ function moveEnemies() {
 
       else { // touching a wall
         if (theEnemies[i].x > player.x) {
+          console.log("left")
           theEnemies[i].vel.x = -1
           theEnemies[i].vel.y -= theEnemies[i].vel.y
-
         }
-        if (theEnemies[i].x < player.x) {
+
+        else if (theEnemies[i].x < player.x) {
+          console.log("right")
           theEnemies[i].vel.x = 1
           theEnemies[i].vel.y -= theEnemies[i].vel.y
         }
 
-        if (theEnemies[i].y > player.y) {
+        else if (theEnemies[i].y > player.y) {
+          console.log("up")
           theEnemies[i].vel.y = -1
           theEnemies[i].vel.x -= theEnemies[i].vel.x
 
         }
 
-        if (theEnemies[i].y < player.y) {
+        else if (theEnemies[i].y < player.y) {
+          console.log("down")
           theEnemies[i].vel.y = 1
           theEnemies[i].vel.x -= theEnemies[i].vel.x
 
@@ -868,6 +865,12 @@ function newRoom() { // closes door behind you and spawns enemie
     for (let i = theBullets.length - 1; i >=0; i--) { // removes all bullets on screen
       theBullets[i].remove()
       theBullets.splice(i, 1)
+    }
+
+    for(i = theCoins.length - 1; i >= 0; i--) { // if you enter a new room but there are still coins on the floor, auto collect the coins
+      theCoins[i].remove();
+      theCoins.splice(i,1);
+      money += 1
     }
 
     time = millis()
@@ -1105,7 +1108,6 @@ function dodgeRoll() {
     if(millis() - player.rolling < player.rolltime) { // makes you invulnerable for a small while
       player.iframes2 = millis()
       if(player.vel.x === 0 && player.vel.y === 0) { // standing still
-        console.log("stil")
         if(player.mirror.x === true) { // if facing left
           player.moveTo(player.x - player.movespeed * 20, player.y, 8) // left
         }
