@@ -136,6 +136,9 @@ function setup() {
   player.rolltime = 300
   player.rolling = 0
 
+  player.rollcooldown = 301
+  player.rollcooldowntime = 300
+
   player.addAni('idle', 'assets/player/basic_idle_01.png', 3) // idle animation
   player.addAni('run', 'assets/player/basic_running_01.png', 2) // running animation
 
@@ -168,7 +171,7 @@ function setup() {
 
   gamestate = "main"
 
-  makeRoom();
+  // makeRoom();
 
   room = l0;
 
@@ -275,8 +278,6 @@ function makeMap(array) {
 function draw() {
   background(220);
 
-  moveCharacter();
-
   mapX, mapY = mapPosition()
 
   enemyKilled();
@@ -297,6 +298,7 @@ function draw() {
   buyItems();
 
   dodgeRoll()
+  moveCharacter();
 }
 
 function moveCharacter(){
@@ -314,20 +316,20 @@ function moveCharacter(){
     player.movespeed = 3
   }
 
-  if(player.y + player.height/2 < height && player.y - player.height/2 > 0) {
     if(room[playeryPos][playerxPos] > 0 || room[playeryPos2][playerxPos] > 0 || room[playeryPos][playerxPos2] > 0 || room[playeryPos2][playerxPos2] > 0) { // if touching wall
       player.x -= player.vel.x // repels you from wall
       player.y -= player.vel.y
     }
-  }
 
   if (kb.pressing('W') && rolling === false) { //up
+    console.log(player.vel.x, player.vel.y)
     player.vel.y = -(player.movespeed);
     player.ani = 'run'
     player.ani.frameDelay = 15
   }
 
   if (kb.pressing('A') && rolling === false) { //left
+    console.log(player.vel.x, player.vel.y)
     player.vel.x = -(player.movespeed);
     player.mirror.x = true
     for(i = 0; i < guns.length; i ++) {
@@ -338,12 +340,14 @@ function moveCharacter(){
   }
 
   if (kb.pressing('S') && rolling === false) { //down
+    console.log(player.vel.x, player.vel.y)
     player.vel.y = player.movespeed;
     player.ani = 'run'
     player.ani.frameDelay = 15
   }
 
   if (kb.pressing('D') && rolling === false) { //right
+    console.log(player.vel.x, player.vel.y)
     player.vel.x = player.movespeed;
     player.mirror.x = false
     for(i = 0; i < guns.length; i ++) { // turns gun with player
@@ -371,21 +375,22 @@ function mousePressed() {
   // changeTile();
 }
 
-function mouseWheel() {
-  index = guns.indexOf(gun)
-  if (index >= guns.length - 1) {
+function mouseWheel() { // scrolling through guns
+  index = guns.indexOf(gun) // number of your gun
+  if (index >= guns.length - 1) { // final gun -> first gun
     index = -1
   }
-  gun = guns[index + 1]
+  gun = guns[index + 1] // change gun to next gun
+
 }
 
 function keyPressed() {
-  if(keyCode === 82 && gun.ammo < gun.magazine && reloading === false) {
+  if(keyCode === 82 && gun.ammo < gun.magazine && reloading === false) { // reload when R pressed
     gun.reload = millis()
     reloading = true
   }
 
-  if(keyCode === 69) {
+  if(keyCode === 69 && millis() - player.rollcooldown > player.rollcooldowntime && rolling === false) {
     player.rolling = millis()
     rolling = true;
   }
@@ -488,7 +493,7 @@ function enemyKilled() { // enemy bullet collision check
 
 function checkCollide() { // player collision
   for(let i = theEnemies.length - 1; i >= 0; i--) {
-  if (player.collides(theEnemies[i]) && millis() - player.iframes2 > player.iframes){ // player collides with enemy body
+  if (player.overlaps(theEnemies[i]) && millis() - player.iframes2 > player.iframes){ // player collides with enemy body
         player.health -= 1 //reduce health
         player.iframes2 = millis()
       }
@@ -979,12 +984,14 @@ function drawStuff() {
   strokeWeight(1)
 
   for (let i = 0; i < guns.length; i++) { // draw gun next to player
-    if(player.vel.x > 0) {
+
+    if(player.mirror.x === false) {
       guns[i].x = player.x + player.width/2
     }
-    else if (player.vel.x < 0) {
+    else if (player.mirror.x === true) {
       guns[i].x = player.x - player.width/2
     }
+
     guns[i].y = player.y + player.width/5
     if (guns[i] !== gun) {
       guns[i].visible = false
@@ -1004,7 +1011,7 @@ function reload() { // if R is pressed, after a certain amount of time refill ma
       rect(player.x - player.width * 1.1, player.y - player.height * 1.1, player.width * 2.2, player.height / 5)
       fill("green");
       noStroke()
-      rect(player.x - player.width * 1.1, player.y - player.height * 1.1, ((millis() - gun.reload) / (player.width * 1.1)), player.height / 5)
+      rect(player.x - player.width * 1.1, player.y - player.height * 1.1, (player.width * 2.2 * (millis() - gun.reload)) / gun.reloadtime, player.height / 5)
     }
 
     if (millis() - gun.reload > gun.reloadtime) { // fills gun with bullets
@@ -1016,31 +1023,33 @@ function reload() { // if R is pressed, after a certain amount of time refill ma
 }
 
 function doShop() {
-  room.status = "shopping"
 
-  shopkeeper.visible = true
+  room.status = "shopping" // so items dont respawn
+
+  shopkeeper.visible = true // show shopkeeper
+
   if(shopItems[0].length === 0 && shopItems[1].length === 0 && shopItems[2].length === 0 ){
     for(let i = ROWS - 1; i >= 0; i--) {
       for(let k = room[i].length - 1; k >= 0; k--) {
         if(room[i][k] === 3) {
-          randitem = itemTypes[Math.floor(random(0, itemTypes.length))]
-          console.log(randitem)
+
+          randitem = itemTypes[Math.floor(random(0, itemTypes.length))] // picks a random item
   
-          if(randitem === "heart") {
+          if(randitem === "heart") { // heartitem
             heart = new Sprite(cellWidth * k + cellWidth/2, cellHeight * i + heartimg.height/2)
             heart.value = 5
             heart.img = heartimg
             shopItems[0].push(heart)
           }
   
-          if (randitem === "halfheart") {
+          if (randitem === "halfheart") { // halfheart item
             halfheart = new Sprite(cellWidth * k + cellWidth/2, cellHeight * i + halfheartimg.height/2)
             halfheart.value = 3
             halfheart.img = halfheartimg
             shopItems[1].push(halfheart)
           }
 
-          if (randitem === "key") {
+          if (randitem === "key") { // key item
             key = new Sprite(cellWidth * k + cellWidth/2, cellHeight * i + keyimg.height/2)
             key.value = 4
             key.img = keyimg
@@ -1050,13 +1059,11 @@ function doShop() {
       }
     }
   }
-
-  for(let i = shopItems[0].length - 1; i >= 0; i--) { // show hearts
-    shopItems[0][i].visible = true
-  }
-
-  for(let i = shopItems[1].length - 1; i >= 0; i--) { // show half hearts
-    shopItems[1][i].visible = true
+  
+  for(let i = shopItems.length - 1; i >= 0; i--) { // show items
+    for(let k = shopItems[i].length - 1; k >= 0; k--) { // 
+      shopItems[i][k].visible = true
+    }
   }
 
 }
@@ -1095,26 +1102,25 @@ function buyItems() {
 
 function dodgeRoll() {
   if(rolling === true) {
-    velx = player.vel.x
-    vely = player.vel.y
-    console.log(velx, vely)
     if(millis() - player.rolling < player.rolltime) { // makes you invulnerable for a small while
       player.iframes2 = millis()
-      if(velx === 0 && vely === 0) { // standing still
-        if(player.mirror.x === true) {
-          player.moveTo(player.x - player.movespeed * 20, player.y + vely * 20, 8) // left
+      if(player.vel.x === 0 && player.vel.y === 0) { // standing still
+        console.log("stil")
+        if(player.mirror.x === true) { // if facing left
+          player.moveTo(player.x - player.movespeed * 20, player.y, 8) // left
         }
-        else{
-          player.moveTo(player.x + player.movespeed * 20, player.y + vely * 20, 8) // right
+        else{ // if facing right
+          player.moveTo(player.x + player.movespeed * 20, player.y, 8) // right
         }
       }
-      player.moveTo(player.x + velx * 20, player.y + vely * 20, 8)
+      player.moveTo(player.x + player.vel.x * 20, player.y + player.vel.y * 20, 8)
       player.mirror.y = true
     }
 
     if(millis() - player.rolling > player.rolltime) { // end invulnerability
       rolling = false
       player.mirror.y = false
+      player.rollcooldown = millis()
     }
   }
 }
