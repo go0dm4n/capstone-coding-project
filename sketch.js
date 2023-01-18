@@ -38,7 +38,7 @@ let reloading = false;
 let rolling = false;
 
 let minEn = 0;
-let maxEn = 1;
+let maxEn = 3;
 
 let money = 0;
 let keys = 0;
@@ -125,7 +125,7 @@ function setup() {
   cellHeight = height / ROWS;
 
   player = new Sprite(width/2, height/2);
-  player.collider = "n"
+  player.collider = "k"
   player.health = 6;
   player.healthtotal = 6;
   player.movespeed = 3;
@@ -399,7 +399,7 @@ function spawnEnemies() {
 
   for(let i = Math.floor(random(minEn, maxEn)); i >= 0 ; i--) {
 
-    enemy = new Sprite(random(enemyWidth, width - enemyWidth), random(enemyWidth, height - enemyWidth),"k");
+    enemy = new Sprite(random(enemyWidth, width - enemyWidth), random(enemyWidth, height - enemyWidth),"d");
 
     enemy.xPos = Math.floor((enemy.x - enemy.width/2)/cellWidth);
 
@@ -455,7 +455,7 @@ function spawnEnemies() {
     enemy.vel.y = 0;
 
     enemy.inv = 81 // invincibility frames for enemies
-
+    player.overlaps(enemy)
     theEnemies.push(enemy);
   }
 }
@@ -475,7 +475,8 @@ function enemyKilled() { // enemy bullet collision check
       }
 
       if (theEnemies[i].health <= 0) {
-        coin = new Sprite(theEnemies[i].x, theEnemies[i].y, 'n');
+        coin = new Sprite(theEnemies[i].x, theEnemies[i].y, 'd');
+        coin.overlaps(player)
         coin.addAni('sit', 'assets/misc/coin01.png', 4)
         coin.ani = 'sit'
         coin.ani.frameDelay = 10
@@ -508,6 +509,7 @@ function shootBullet() { // spawns and moves bullets to cursor
       stroke("black")
       gun.ammo-- 
       bullet = new Sprite(gun.x + gun.width/2, gun.y, 10);
+      bullet.overlaps(player)
       bullet.image = pistolbulletimage
       bullet.collider = "d"
       bullet.strength = 1;
@@ -523,6 +525,7 @@ function shootBullet() { // spawns and moves bullets to cursor
         for(let i = -2; i < 3; i++) {
           if (i !== 0) {
             bullet = new Sprite(gun.x + gun.width/2, player.y, 10);
+            bullet.overlaps(player)
             bullet.image = shotgunbulletimage
             bullet.collider = "d"
             bullet.strength = 1;
@@ -559,7 +562,7 @@ function pickupItems() {
   for (let i = theCoins.length - 1; i >= 0; i--){
     // theCoins[i].vel.x = 0 // prevent coins from moving off screen due to colliders malfunctioning
     // theCoins[i].vel.y = 0
-    if(theCoins[i].x < player.x + player.width/2 && theCoins[i].x > player.x - player.width/2 && theCoins[i].y < player.y + player.height/2 && theCoins[i].y > player.y - player.height/2) { // if player touches a coin
+    if(theCoins[i].overlaps(player)) { // if player touches a coin
       theCoins[i].remove(); // delete sprite & remove from array
       theCoins.splice(i,1);
       money += 1;
@@ -772,7 +775,7 @@ function moveEnemies() {
           theEnemies[i].vel.y -= theEnemies[i].vel.y
         }
 
-        else if (theEnemies[i].y > player.y) {
+        if (theEnemies[i].y > player.y) {
           console.log("up")
           theEnemies[i].vel.y = -1
           theEnemies[i].vel.x -= theEnemies[i].vel.x
