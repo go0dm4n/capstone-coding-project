@@ -748,46 +748,45 @@ function moveEnemies() {
 
     if(touchingWall(theEnemies[i].xPos, theEnemies[i].yPos, theEnemies[i].xPos2, theEnemies[i].yPos2)) { // if not touching wall
 
-      if (player.x > theEnemies[i].x) { // enemy is left of player
+      if (theEnemies[i].xPos >= 0 && theEnemies[i].xPos2 <= COLS && theEnemies[i].yPos >= 0 && theEnemies[i].yPos2 <= ROWS){ // in boundaries 
+
+        if(wallAbove(theEnemies[i].xPos, theEnemies[i].yPos, theEnemies[i].xPos2, theEnemies[i].yPos2)) { // wall below or above
+          if (player.x / theEnemies[i].x > 1 ) { // enemy is left of player
             theEnemies[i].vel.x = 1 // move right
-        }
-      else if (player.x < theEnemies[i].x) { // enemy is right of player
+          }
+          else if (player.x / theEnemies[i].x < 1) { // enemy is right of player
             theEnemies[i].vel.x = -1; // move left
+          }
         }
-      if (player.y > theEnemies[i].y) { // enemy is above player
+
+        else if(wallSides(theEnemies[i].xPos, theEnemies[i].yPos, theEnemies[i].xPos2, theEnemies[i].yPos2)) { // wall below or above
+          if (player.y / theEnemies[i].y > 1) { // enemy is above player
             theEnemies[i].vel.y = 1 // move down
-        }
-      else if (player.y < theEnemies[i].y) { // enemy is below player
+            }
+          else if (player.y / theEnemies[i].y < 1) { // enemy is below player
             theEnemies[i].vel.y = -1; // move up
+            }
+        }
+
+        else { //no walls nearby, free movement
+          if (player.x / theEnemies[i].x > 1) { // enemy is left of player
+            theEnemies[i].vel.x = 1 // move right
+          }
+          else if (player.x / theEnemies[i].x < 1) { // enemy is right of player
+            theEnemies[i].vel.x = -1; // move left
+          }
+          if (player.y / theEnemies[i].y > 1) { // enemy is above player
+            theEnemies[i].vel.y = 1 // move down
+          }
+          else if (player.y / theEnemies[i].y < 1) { // enemy is below player
+            theEnemies[i].vel.y = -1; // move up
+          }
         }
       }
-
-      else { // touching a wall
-        if (theEnemies[i].x > player.x) {
-          console.log("left")
-          theEnemies[i].vel.x = -1
-          theEnemies[i].vel.y -= theEnemies[i].vel.y
-        }
-
-        else if (theEnemies[i].x < player.x) {
-          console.log("right")
-          theEnemies[i].vel.x = 1
-          theEnemies[i].vel.y -= theEnemies[i].vel.y
-        }
-
-        if (theEnemies[i].y > player.y) {
-          console.log("up")
-          theEnemies[i].vel.y = -1
-          theEnemies[i].vel.x -= theEnemies[i].vel.x
-
-        }
-
-        else if (theEnemies[i].y < player.y) {
-          console.log("down")
-          theEnemies[i].vel.y = 1
-          theEnemies[i].vel.x -= theEnemies[i].vel.x
-
-        }
+    }
+    else { // touching a wall
+      theEnemies[i].vel.x = -theEnemies[i].vel.x
+      theEnemies[i].vel.y = -theEnemies[i].vel.y
     }
   }
 }
@@ -804,12 +803,12 @@ function touchingWall(left, top, right, bottom) {
   return room[top][left] !== 1 && room[bottom][left] !== 1 && room[top][right] !== 1 && room[bottom][right] !== 1;
 }
 
-function touchingTop(left, top, right, bottom) {
-  return room[top][left] !== 1 && room[bottom][left] !== 1 && room[top][right] !== 1 && room[bottom][right] !== 1;
+function wallRight(left, top, right, bottom) {
+  return room[top][right + 1] === 1 || room[bottom][right + 1] === 1 && (room[bottom][left - 1] ==! 1 && room[top][left - 1] ==! 1);
 }
 
-function touchingBottom(left, top, right, bottom) {
-  return room[bottom][3] !== 1 && room[bottom][left];
+function wallLeft(left, top, right, bottom) {
+  return (room[top][right + 1] !== 1 && room[bottom][right + 1] !== 1) && room[bottom][left - 1] === 1 || room[top][left - 1] === 1;
 }
 
 function mapPosition() { // finds where you are on the map
@@ -1042,21 +1041,21 @@ function doShop() {
           randitem = itemTypes[Math.floor(random(0, itemTypes.length))] // picks a random item
   
           if(randitem === "heart") { // heartitem
-            heart = new Sprite(cellWidth * k + cellWidth/2, cellHeight * i + heartimg.height/2)
+            heart = new Sprite(cellWidth * k + cellWidth/2, cellHeight * i + heartimg.height/2, "n")
             heart.value = 5
             heart.img = heartimg
             shopItems[0].push(heart)
           }
   
           if (randitem === "halfheart") { // halfheart item
-            halfheart = new Sprite(cellWidth * k + cellWidth/2, cellHeight * i + halfheartimg.height/2)
+            halfheart = new Sprite(cellWidth * k + cellWidth/2, cellHeight * i + halfheartimg.height/2, "n")
             halfheart.value = 3
             halfheart.img = halfheartimg
             shopItems[1].push(halfheart)
           }
 
           if (randitem === "key") { // key item
-            key = new Sprite(cellWidth * k + cellWidth/2, cellHeight * i + keyimg.height/2)
+            key = new Sprite(cellWidth * k + cellWidth/2, cellHeight * i + keyimg.height/2, "n")
             key.value = 4
             key.img = keyimg
             shopItems[1].push(key)
@@ -1087,19 +1086,32 @@ function buyItems() {
           money -= shopItems[i][k].value;
 
           if (shopItems[i][k] === heart) { // buy heart
-            player.health += 2
+            if (player.health !== player.healthtotal) {
+              player.health += 2
+              shopItems[i][k].remove() // get rid of item
+              shopItems[i].splice(k, 1)
+            }
+            else {
+              money += shopItems[i][k].value;
+            }
           }
           
           if (shopItems[i][k] === halfheart) { // buy halfheart
-            player.health += 1
+            if (player.health !== player.healthtotal) {
+              player.health += 1
+              shopItems[i][k].remove() // get rid of item
+              shopItems[i].splice(k, 1)
+            }
+            else {
+              money += shopItems[i][k].value;
+            }
           }
 
           if (shopItems[i][k] === key) { // buy key
             keys += 1
+            shopItems[i][k].remove() // get rid of item
+            shopItems[i].splice(k, 1)
           }
-
-          shopItems[i][k].remove() // get rid of item
-          shopItems[i].splice(k, 1)
         }
       }
     }
