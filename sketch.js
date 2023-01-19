@@ -807,8 +807,8 @@ function wallRight(left, top, right, bottom) {
   return room[top][right + 1] === 1 || room[bottom][right + 1] === 1 && (room[bottom][left - 1] ==! 1 && room[top][left - 1] ==! 1);
 }
 
-function wallLeft(left, top, right, bottom) {
-  return (room[top][right + 1] !== 1 && room[bottom][right + 1] !== 1) && room[bottom][left - 1] === 1 || room[top][left - 1] === 1;
+function wallAbove(left, top, right, bottom) {
+  return (room[top - 1][right] === 1 && room[top - 1][left] === 1) && room[bottom + 1][right] === 1 || room[bottom + 1][left] === 1 
 }
 
 function mapPosition() { // finds where you are on the map
