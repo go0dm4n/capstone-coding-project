@@ -171,9 +171,9 @@ function setup() {
 
   gamestate = "main"
 
-  // makeRoom();
+  makeRoom();
 
-  room = l0;
+  // room = l0;
 
   pistol = new Sprite(player.x + player.width, player.y, 20, 10, "n")
   pistol.color = (86, 86, 86)
@@ -213,7 +213,7 @@ function setup() {
   guns = [pistol, shotgun, machinegun];
   gun = guns[0];
 
-  makeMap(theLevels1)
+  // makeMap(theLevels1)
   l0.status = true
 }
 
@@ -278,7 +278,7 @@ function makeMap(array) {
 function draw() {
   background(220);
 
-  mapX, mapY = mapPosition()
+  // mapX, mapY = mapPosition()
 
   enemyKilled();
   checkCollide();
@@ -370,8 +370,8 @@ function moveCharacter(){
 }
 
 function mousePressed() {
-  shootBullet();
-  // changeTile();
+  // shootBullet();
+  changeTile();
 }
 
 function mouseWheel() { // scrolling through guns
@@ -421,23 +421,6 @@ function spawnEnemies() {
   
       enemy.yPos2 = Math.floor((enemy.y + enemy.height/2)/cellHeight);
     }
-
-    // while (room[enemy.yPos][enemy.xPos] === 1 || room[enemy.yPos2][enemy.xPos] === 1 || room[enemy.yPos][enemy.xPos2] === 1 || room[enemy.yPos2][enemy.xPos2] === 1) {
-
-    //   enemy.x = random(enemyWidth, width - enemyWidth)
-    //   enemy.y = random(enemyWidth, height - enemyWidth)
-
-    //   enemy.xPos = Math.floor((enemy.x - enemy.width)/cellWidth);
-  
-    //   enemy.yPos = Math.floor((enemy.y - enemy.height)/cellHeight);
-    
-    //   enemy.xPos2 = Math.floor((enemy.x + enemy.width)/cellWidth);
-    
-    //   enemy.yPos2 = Math.floor((enemy.y + enemy.height)/cellHeight);
-
-    //   // console.log("wall", i, room[enemy.yPos][enemy.xPos], room[enemy.yPos2][enemy.xPos], room[enemy.yPos][enemy.xPos2], room[enemy.yPos2][enemy.xPos2])
-    // }
-
 
     enemy.speed = 1;
     enemy.health = (Math.floor(random(1, 3)));
@@ -724,13 +707,13 @@ function changeTile(){ // room editing tool
   if (room[yPos][xPos] === 0) {
     room[yPos][xPos] = 1;
   }
+  // else if (room[yPos][xPos] === 1) {
+  //   room[yPos][xPos] = 2;
+  // }   
+  // else if (room[yPos][xPos] === 2) {
+  //   room[yPos][xPos] = 3;
+  // } 
   else if (room[yPos][xPos] === 1) {
-    room[yPos][xPos] = 2;
-  }   
-  else if (room[yPos][xPos] === 2) {
-    room[yPos][xPos] = 3;
-  } 
-  else if (room[yPos][xPos] === 3) {
     room[yPos][xPos] = 0;
   }    
 }
@@ -1141,13 +1124,3 @@ function dodgeRoll() {
     }
   }
 }
-
-// if (newr === true) { this does things every 2 seconds, probably good to keep for later
-//   time = millis()
-//   newr = false
-// }
-// if (millis() - time > 2000) {
-//   console.log("augh")
-//   spawnEnemies()
-//   time = millis()
-// }
