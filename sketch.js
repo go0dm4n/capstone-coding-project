@@ -15,6 +15,7 @@ let guns;
 let theEnemies = [];
 let enemyBullets = [];
 let theCoins = [];
+let theChests = [];
 let heart, halfheart, key; 
 let itemTypes = ["heart", "halfheart", "key"];
 let shopItems = [[], [], []];
@@ -22,7 +23,6 @@ let shopItems = [[], [], []];
 let gamestate;
 
 let player;
-let chest;
 
 let map = [[0,0,0,0], 
            [0,0,0,0],
@@ -38,7 +38,7 @@ let newr = false;
 let reloading = false;
 let rolling = false;
 
-let minEn = 0;
+let minEn = 2;
 let maxEn = 6;
 
 let money = 0;
@@ -222,12 +222,12 @@ function setup() {
 
   machinegun.reloadtime = 3000;
   machinegun.reload = 3000;
-  machinegun.visible = false
+  machinegun.visible = false;
 
   guns = [pistol, shotgun, machinegun]; // guns list
   gun = guns[0];
 
-  gate = new Sprite(width/2, 0 + cellHeight/2, cellWidth * 6, cellHeight, 's')
+  gate = new Sprite(width/2, 0 + cellHeight/2, cellWidth * 6, cellHeight, 's');
   gate.image = lock;
   gate.visible = false;
 
@@ -963,9 +963,11 @@ function newRoom() { // does things once room is entered
     shopkeeper.visible = false; // invisible shopkeeper
     gate.visible = false; // invisible shopkeeper
     gate.collider = "n";
+    if (theChests.length === 1) {
+      chest.visible = false; // invisible shopkeeper
+      chest.collider = "n";
+    }
 
-    chest.visible = false; // invisible shopkeeper
-    chest.collider = "n";
 
     if (room.status === "shop") { // do shop sequence
       doShop();
@@ -1033,10 +1035,11 @@ function roomComplete(){ // if all the enemies are dead
     for (let k = map[i].length - 1; k >= 0; k--) {
       if (map[i][k] !== 0 && theEnemies.length === 0 && map[i][k].status === "in progress") {
         room.status = "complete";
-        if(random(0, 5) < 1 && room.chest === false && !chest) {
+        if(random(0, 5) < 1 && room.chest === false && theChests.length === 0) {
             chest = new Sprite(width/2, height/2, 50, 50, "s"); // makes a chest
             chest.image = chestimg
             room.chest = true; // prevent multiple chests
+            theChests.push(chest)
           }
           else if (random(0, 5) > 1 && room.chest === false) {
             room.chest = "failed" // no chest
@@ -1114,6 +1117,19 @@ function drawStuff() {
     }
     else if (gamestate === "game"){
       guns[i].visible = true;
+    }
+  }
+
+  if (gate.visible === true && dist(player.x, player.y, gate.x, gate.y) < 100) {
+    fill("white")
+    textSize(30)
+    text("Q - Unlock?", gate.x - gate.width/2, gate.y + 100)
+  }
+  if (theChests.length > 0) {
+    if (chest.visible === true && dist(player.x, player.y, chest.x, chest.y) < 100) {
+      fill("white")
+      textSize(20)
+      text("Q - Unlock?", gate.x - gate.width/2, gate.y + 100)
     }
   }
 }
@@ -1373,16 +1389,16 @@ function bossAI() { // boss movement and attack
           for (let k = 0; k <= 6; k++) {
             bossbullet = new Sprite(width/3 - 50 * i, 0 - 30 * k, 10);
   
-            bossbullet.overlaps(player) // bullet doesnt collide with player
-            bossbullet.overlaps(boss)
-            bossbullet.image = pistolbulletimage
+            bossbullet.overlaps(player); // bullet doesnt collide with player
+            bossbullet.overlaps(boss);
+            bossbullet.image = pistolbulletimage;
       
-            bossbullet.collider = "k"
+            bossbullet.collider = "k";
             bossbullet.strength = 1;
-            bossbullet.speed = 7
+            bossbullet.speed = 7;
       
             bossbullet.moveTo(bossbullet.x, height + 10); // dividing by distance from mouse to keep speed constant   
-            enemyBullets.push(bossbullet)   
+            enemyBullets.push(bossbullet);   
           }   
         }
       }
@@ -1394,16 +1410,16 @@ function bossAI() { // boss movement and attack
           for (let k = 0; k <= 6; k++) {
             bossbullet = new Sprite(width/1.5 - 50 * i, 0 - 30 * k, 10);
   
-            bossbullet.overlaps(player) 
-            bossbullet.overlaps(boss)
-            bossbullet.image = pistolbulletimage
+            bossbullet.overlaps(player) ;
+            bossbullet.overlaps(boss);
+            bossbullet.image = pistolbulletimage;
       
-            bossbullet.collider = "k"
+            bossbullet.collider = "k";
             bossbullet.strength = 1;
-            bossbullet.speed = 7
+            bossbullet.speed = 7;
       
             bossbullet.moveTo(bossbullet.x, height + 10); 
-            enemyBullets.push(bossbullet)   
+            enemyBullets.push(bossbullet); 
           }   
         }
       }
