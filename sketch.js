@@ -11,14 +11,15 @@ let room = [];
 let oldroom = [];
 let theBullets = [];
 let pistol, shotgun, machinegun;
-let guns;
+let playerguns = [];
+let guns = [];
 let theEnemies = [];
 let enemyBullets = [];
 let theCoins = [];
 let theChests = [];
 let heart, halfheart, key; 
 let itemTypes = ["heart", "halfheart", "key"];
-let shopItems = [[], [], []];
+let shopItems = [[], [], [], []];
 
 let gamestate;
 
@@ -43,6 +44,7 @@ let maxEn = 6;
 
 let money = 0;
 let keys = 0;
+let gatekeys = 0;
 
 const COLS = 40
 const ROWS = 20
@@ -64,7 +66,7 @@ let mapX = 0;
 let mapY = 0;
 
 function preload() {
-  l00 = loadJSON("level grids/1-0.json"); // different rooms
+  l00 = loadJSON("level grids/blank.json"); // different rooms
   l0 = loadJSON("level grids/1-0.json"); 
   l1 = loadJSON("level grids/1-1.json");
   l2 = loadJSON("level grids/1-2.json");
@@ -72,8 +74,9 @@ function preload() {
   l4 = loadJSON("level grids/1-4.json");
   s1 = loadJSON("level grids/s-1.json");
   l5 = loadJSON("level grids/1-5.json");
+  l6 = loadJSON("level grids/1-6.json");
 
-  theLevels1 = [l1, l2, l3, l4, s1]; // list of random rooms
+  theLevels1 = [l1, l2, l3, l4, s1, l6]; // list of random rooms
 
   tileTL = loadImage("assets/tiles/tileTL.png"); // tiles
   tileTR = loadImage("assets/tiles/tileTR.png");
@@ -110,6 +113,7 @@ function preload() {
   heartimg = loadImage("assets/misc/heart.png");
   halfheartimg = loadImage("assets/misc/halfheart.png"); 
   keyimg = loadImage("assets/misc/key.png"); 
+  gatekeyimg = loadImage("assets/misc/gatekey.png");
 
   chestimg = loadImage("assets/misc/chest.png"); 
 
@@ -118,9 +122,11 @@ function preload() {
 
   pistolimage = loadImage("assets/misc/pistol.png");
   shotgunimage = loadImage("assets/misc/shotgun.png");
+  machinegunimage = loadImage("assets/misc/machinegun.png");
 
   pistolbulletimage = loadImage("assets/misc/pistol bullet.png");
   shotgunbulletimage = loadImage("assets/misc/shotgun bullet.png");
+  machinegunbulletimage = loadImage("assets/misc/machinegun bullet.png");
 
   playerimg = loadImage('assets/player/basic_idle_01.png');
 
@@ -134,7 +140,7 @@ function setup() {
   cellWidth = width / COLS;
   cellHeight = height / ROWS;
 
-  player = new Sprite(width/2, height/2);
+  player = new Sprite(width/2, height/2); // player
   player.collider = "d";
   player.health = 6;
   player.healthtotal = 6;
@@ -160,6 +166,8 @@ function setup() {
   player.ani.frameDelay = 15;
 
   shopkeeper = new Sprite(width/4, cellHeight * 8); // make shopkeeper
+  shopkeeper.addAni('idle', 'assets/misc/shopkeeper_01.png', 2);
+  shopkeeper.ani.frameDelay = 60
   shopkeeper.collider = "none";
   shopkeeper.visible = false;
 
@@ -171,6 +179,8 @@ function setup() {
   halfheartimg.height = halfheartimg.height/4;
   keyimg.width = keyimg.width/4;
   keyimg.height = keyimg.height/4;
+  gatekeyimg.width = gatekeyimg.width/4;
+  gatekeyimg.height = gatekeyimg.height/4;
 
   healthimg.width = healthimg.width/2;
   healthimg.height = healthimg.height/2;
@@ -181,6 +191,8 @@ function setup() {
   pistolimage.height = pistolimage.height/4;
   shotgunimage.width = shotgunimage.width/2;
   shotgunimage.height = shotgunimage.height/2;
+  machinegunimage.width = machinegunimage.width/2;
+  machinegunimage.height = machinegunimage.height/2;
 
   gamestate = "main"; // main menu
 
@@ -212,20 +224,25 @@ function setup() {
 
   shotgun.firerate = 1000;
   shotgun.fired = 1001;
-  shotgun.visible = false
+  shotgun.visible = false;
 
   machinegun = new Sprite(player.x + player.width, player.y, 30, 6, "n"); // create machine gun
-  machinegun.color = (255, 114, 236);
+  machinegun.image = machinegunimage;
 
-  machinegun.magazine = 25;
-  machinegun.ammo = 25;
+  machinegun.magazine = 2;
+  machinegun.ammo = 2;
 
   machinegun.reloadtime = 3000;
   machinegun.reload = 3000;
+
+  machinegun.firerate = 300;
+  machinegun.fired = 301;
+
   machinegun.visible = false;
 
-  guns = [pistol, shotgun, machinegun]; // guns list
-  gun = guns[0];
+  playerguns = [pistol];
+  guns = [shotgun, machinegun]; // guns list
+  gun = playerguns[0];
 
   gate = new Sprite(width/2, 0 + cellHeight/2, cellWidth * 6, cellHeight, 's');
   gate.image = lock;
@@ -332,8 +349,9 @@ function movePlayer(){ // player movement and drawing
   playeryPos = Math.floor((player.y - player.height/2)/cellHeight);
   playerxPos2 = Math.floor((player.x + player.width/2)/cellWidth);
   playeryPos2 = Math.floor((player.y + player.height/2)/cellHeight);
-  if (gamestate === "game") {
-    player.visible = true
+
+  if (gamestate === "game") { // only allow movement when game
+    player.visible = true; // show player
     if (room.status !== "in progress") { // if there arent enemies make the player faster
       player.movespeed = 4.5;
     }
@@ -343,12 +361,12 @@ function movePlayer(){ // player movement and drawing
     }
   
     if(player.y + player.height/2 < height && player.y - player.height/2 > 0) {
-     if(room[playeryPos][playerxPos] > 0 || room[playeryPos2][playerxPos] > 0 || room[playeryPos][playerxPos2] > 0 || room[playeryPos2][playerxPos2] > 0) { // if touching wall
+      if(room[playeryPos][playerxPos] > 0 || room[playeryPos2][playerxPos] > 0 || room[playeryPos][playerxPos2] > 0 || room[playeryPos2][playerxPos2] > 0) { // if touching wall
         player.x -= player.vel.x; // repels you from wall
         player.y -= player.vel.y;
       }
   
-      if((room[playeryPos][playerxPos] === -1 || room[playeryPos2][playerxPos] === -1 || room[playeryPos][playerxPos2] === -1 || room[playeryPos2][playerxPos2] ===-1) && millis() - player.iframes2 > player.iframes) { // if on spikes
+        if((room[playeryPos][playerxPos] === -1 || room[playeryPos2][playerxPos] === -1 || room[playeryPos][playerxPos2] === -1 || room[playeryPos2][playerxPos2] ===-1) && millis() - player.iframes2 > player.iframes) { // if on spikes
         player.health -= 1;
         player.iframes2 = millis()
       }
@@ -368,8 +386,8 @@ function movePlayer(){ // player movement and drawing
       player.ani.frameDelay = 15;
   
       player.mirror.x = true // flips you horizontally
-      for(i = 0; i < guns.length; i ++) {
-        guns[i].mirror.x = true; // flips gun horizontally
+      for(i = 0; i < playerguns.length; i ++) {
+        playerguns[i].mirror.x = true; // flips gun horizontally
       }
     }
   
@@ -385,8 +403,8 @@ function movePlayer(){ // player movement and drawing
       player.ani.frameDelay = 15;
   
       player.mirror.x = false
-      for(i = 0; i < guns.length; i ++) { // turns gun with player
-        guns[i].mirror.x = false;
+      for(i = 0; i < playerguns.length; i ++) { // turns gun with player
+        playerguns[i].mirror.x = false;
       }
     }
   
@@ -416,11 +434,11 @@ function mousePressed() {
 }
 
 function mouseWheel() { // scrolling through guns
-  index = guns.indexOf(gun) // number of your gun
-  if (index >= guns.length - 1) { // final gun -> first gun
+  index = playerguns.indexOf(gun) // number of your gun
+  if (index >= playerguns.length - 1) { // final gun -> first gun
     index = -1
   }
-  gun = guns[index + 1] // change gun to next gun
+  gun = playerguns[index + 1] // change gun to next gun
 
 }
 
@@ -435,16 +453,23 @@ function keyPressed() {
     rolling = true;
   }
 
-  if(keyCode === 81 && dist(player.x, player.y, gate.x, gate.y) < 150 && gate.visible === true && keys > 0) { // unlock when Q pressed
-    keys -= 1;
-    gate.remove();
+  if(keyCode === 81 && dist(player.x, player.y, gate.x, gate.y) < 150 && gate.visible === true && gatekeys > 0) { // unlock when Q pressed
+    gatekeys -= 1;
+    gate.remove(); // delete gate
+  }
+
+  if (theChests.length > 0) { // unlock when Q pressed
+    if(keyCode === 81 && dist(player.x, player.y, chest.x, chest.y) < 150 && chest.visible === true && keys > 0) { 
+      keys -= 1;
+      chestOpen();
+    }
   }
 }
 
 function spawnEnemies() {
   for(let i = Math.floor(random(minEn, maxEn)); i >= 0 ; i--) {
 
-    enemy = new Sprite(random(enemyWidth, width - enemyWidth), random(enemyWidth, height - enemyWidth),"d"); // create enemy
+    enemy = new Sprite(random(enemyWidth, width - enemyWidth), random(enemyWidth, height - enemyWidth),"k"); // create enemy
 
     enemy.xPos = Math.floor((enemy.x - enemy.width/2)/cellWidth); // enemy place in grid
 
@@ -454,8 +479,8 @@ function spawnEnemies() {
 
     enemy.yPos2 = Math.floor((enemy.y + enemy.height/2)/cellHeight);
 
-    while (!(enemy.xPos > 0 && enemy.yPos > 0 && enemy.yPos2 < ROWS - 1 && enemy.xPos2 < COLS - 1) || room[enemy.yPos][enemy.xPos] === 1 || room[enemy.yPos2][enemy.xPos] === 1 
-    || room[enemy.yPos][enemy.xPos2] === 1 || room[enemy.yPos2][enemy.xPos2] === 1) {
+    while (!(enemy.xPos > 0 && enemy.yPos > 0 && enemy.yPos2 < ROWS - 1 && enemy.xPos2 < COLS - 1) || room[enemy.yPos][enemy.xPos] !== 0 || room[enemy.yPos2][enemy.xPos] !== 0 
+    || room[enemy.yPos][enemy.xPos2] !== 0 || room[enemy.yPos2][enemy.xPos2] !== 0) {
       // keep rerolling enemy position until it's not in a wall and not out of bounds
       enemy.x = random(0 + enemyWidth, width - enemyWidth)
       enemy.y = random(0 + enemyWidth, height - enemyWidth)
@@ -504,7 +529,7 @@ function enemyShot() { // enemy bullet collision check
       }
 
       if (theEnemies[i].health <= 0) { // if enemies lose all health
-        coin = new Sprite(theEnemies[i].x, theEnemies[i].y, 'd'); // generate coin on where enemy died
+        coin = new Sprite(theEnemies[i].x, theEnemies[i].y, 'k'); // generate coin on where enemy died
         coin.overlaps(player) // player doesnt collide with coin
 
         coin.addAni('sit', 'assets/misc/coin01.png', 4) // set coin animation
@@ -558,7 +583,6 @@ function checkCollide() { // player collision
 
 
 function shootBullet() { // spawns and moves bullets to cursor
-
   if(reloading === false) { // if not reloading
     if(gun === pistol && millis() - gun.fired > gun.firerate && gun.ammo > 0) { // pistol shooting
       stroke("black")
@@ -584,7 +608,6 @@ function shootBullet() { // spawns and moves bullets to cursor
       gun.ammo--
         for(let i = -2; i < 3; i++) { // 4 bullets
           if (i !== 0) { // no center bullet
-
             bullet = new Sprite(gun.x + gun.width/2, player.y, 10);
             bullet.overlaps(player)
             bullet.image = shotgunbulletimage
@@ -598,6 +621,26 @@ function shootBullet() { // spawns and moves bullets to cursor
             gun.fired = millis() // fire rate check
         }
       }
+    }
+
+    if(gun === machinegun && millis() - gun.fired > gun.firerate && gun.ammo > 0) { // machine shooting
+      stroke("black")
+      machinegun.bulletspread1 = millis()
+      gun.ammo-- //reduce ammo
+
+      bullet = new Sprite(gun.x + gun.width/2, gun.y, 300);
+    
+      bullet.overlaps(player) // bullet doesnt collide with player
+      bullet.image = machinegunbulletimage;
+    
+      bullet.collider = "d"
+      bullet.strength = 5;
+      bullet.speed = 6;
+    
+      bullet.moveTowards(mouse, bullet.speed / dist(bullet.x, bullet.y, mouseX, mouseY)); // dividing by distance from mouse to keep speed constant
+    
+      theBullets.push(bullet);
+      gun.fired = millis(); // fire rate check
     }
   }
 }
@@ -795,10 +838,10 @@ function changeTile(){ // room editing tool
   //   room[yPos][xPos] = 3;
   // } 
   else if (room[yPos][xPos] === 1) {
-    room[yPos][xPos] = 4;
+    room[yPos][xPos] = -1;
   }  
 
-  else if (room[yPos][xPos] === 4) {
+  else if (room[yPos][xPos] === -1) {
     room[yPos][xPos] = 0;
   }   
 }
@@ -935,14 +978,13 @@ function changeRoom() { // if you go through a door, change the room
 }
 
 function newRoom() { // does things once room is entered
-  if (room === l0) {
+  if (room === l0 && gamestate === "game") { // show gate when in start room
     gate.visible = true;
     gate.collider = "s"
   }
 
-  if (room.chest === true) {
+  if (room.chest === true) { // if in room with chest show chest
     chest.visible = true;
-    gate.collider = "s"
   }
 
   if (newr === true) { // start timer
@@ -957,15 +999,15 @@ function newRoom() { // does things once room is entered
       money += 1;
     }
 
-    time = millis();
+    time = millis(); // timer for door shut
     newr = false;
 
     shopkeeper.visible = false; // invisible shopkeeper
-    gate.visible = false; // invisible shopkeeper
-    gate.collider = "n";
+    gate.visible = false; // invisible gate
+    gate.collider = "n"; // prevent colliding with gate when not in room
+
     if (theChests.length === 1) {
-      chest.visible = false; // invisible shopkeeper
-      chest.collider = "n";
+      chest.visible = false; // invisible chest
     }
 
 
@@ -973,13 +1015,11 @@ function newRoom() { // does things once room is entered
       doShop();
     }
 
-    else {
-      for(let i = shopItems[0].length - 1; i >= 0; i--) { // make hearts invisible
-        shopItems[0][i].visible = false;
-      }
-  
-      for(let i = shopItems[1].length - 1; i >= 0; i--) { // make hearts visible
-        shopItems[1][i].visible = false;
+    else if (room.status !== "shop"){
+      for(let i = shopItems.length - 1; i >= 0; i--) {
+        for(let k = shopItems[i].length - 1; k >= 0; k--) { // make items invisible
+          shopItems[i][k].visible = false;
+        }
       }
     }
 
@@ -1009,6 +1049,9 @@ function blockade(room) { // blocks the doors
       else if(room[i][k] === 0){
         oldroom[i].push(0);
       }
+      else if(room[i][k] === -1){
+        oldroom[i].push(-1);
+      }
     }
   }
 
@@ -1036,7 +1079,7 @@ function roomComplete(){ // if all the enemies are dead
       if (map[i][k] !== 0 && theEnemies.length === 0 && map[i][k].status === "in progress") {
         room.status = "complete";
         if(random(0, 5) < 1 && room.chest === false && theChests.length === 0) {
-            chest = new Sprite(width/2, height/2, 50, 50, "s"); // makes a chest
+            chest = new Sprite(width/2, height/2, 50, 50, "n"); // makes a chest
             chest.image = chestimg
             room.chest = true; // prevent multiple chests
             theChests.push(chest)
@@ -1078,6 +1121,10 @@ function drawStuff() {
   textFont(font);
   text(keys, cellWidth * 2, cellHeight * 4.3);
 
+  if (gatekeys > 0) {
+    image(gatekeyimg, cellWidth/1.7, cellHeight * 4.5, cellWidth * 1.2, cellHeight * 1.2 )
+  }
+
   stroke("white"); // gun display
   strokeWeight(3);
   fill(80, 80, 80, 80);
@@ -1090,46 +1137,49 @@ function drawStuff() {
 
   if(gun === pistol) { // show pistol
     image(pistolimage, width - cellWidth * 5 + (pistolimage.width * 1.5), height - cellHeight * 4.5 + (pistolimage.height * 1.5), pistolimage.width * 3, pistolimage.height * 3);
-
   }
 
   if(gun === shotgun) { // show shotgun
     image(shotgunimage, width - cellWidth * 5, height - cellHeight * 4.5 + shotgunimage.height * 1.5, shotgunimage.width * 3, shotgunimage.height * 3);
+  }
 
+  if(gun === machinegun) { // show machinegun
+    image(machinegunimage, width - cellWidth * 5 + (machinegunimage.width * 1.5), height - cellHeight * 4.5 + (machinegunimage.height * 1.5), machinegunimage.width * 3, machinegunimage.height * 3);
   }
 
   strokeWeight(1)
 
-  for (let i = 0; i < guns.length; i++) { // draw gun next to player
+  for (let i = 0; i < playerguns.length; i++) { // draw gun next to player
 
     if(player.mirror.x === false) { // turns gun with player
-      guns[i].x = player.x + player.width/2;
+      playerguns[i].x = player.x + player.width/2;
     }
 
     else if (player.mirror.x === true) {
-      guns[i].x = player.x - player.width/2;
+      playerguns[i].x = player.x - player.width/2;
     }
 
-    guns[i].y = player.y + player.width/5;
+    playerguns[i].y = player.y + player.width/5;
 
-    if (guns[i] !== gun) { // show only the gun you're holding
-      guns[i].visible = false;
+    if (playerguns[i] !== gun) { // show only the gun you're holding
+      playerguns[i].visible = false;
     }
     else if (gamestate === "game"){
-      guns[i].visible = true;
+      playerguns[i].visible = true;
     }
   }
 
-  if (gate.visible === true && dist(player.x, player.y, gate.x, gate.y) < 100) {
-    fill("white")
-    textSize(30)
-    text("Q - Unlock?", gate.x - gate.width/2, gate.y + 100)
+  if (gate.visible === true && dist(player.x, player.y, gate.x, gate.y) < 100) { // if close to gate
+    fill("white");
+    textSize(30);
+    text("Q - Unlock?", gate.x - gate.width/2, gate.y + 100); // write unlock text
   }
-  if (theChests.length > 0) {
-    if (chest.visible === true && dist(player.x, player.y, chest.x, chest.y) < 100) {
-      fill("white")
-      textSize(20)
-      text("Q - Unlock?", gate.x - gate.width/2, gate.y + 100)
+
+  if (theChests.length > 0) { // if chest
+    if (chest.visible === true && dist(player.x, player.y, chest.x, chest.y) < 100) { // if close to visible chest
+      fill("white");
+      textSize(20);
+      text("Q - Unlock?", chest.x, chest.y + 30); // write unlock text
     }
   }
 }
@@ -1185,13 +1235,18 @@ function doShop() {
             key = new Sprite(cellWidth * k + cellWidth/2, cellHeight * i + keyimg.height/2, "n");
             key.value = 4;
             key.img = keyimg;
-            shopItems[1].push(key);
+            shopItems[2].push(key);
           }
         }
       }
     }
   }
-  
+
+  gatekey = new Sprite(cellWidth * 15 + cellWidth/2, cellHeight * 15 + heartimg.height/2, "n");
+  gatekey.value = 7;
+  gatekey.img = gatekeyimg;
+  shopItems[3].push(gatekey);  
+
   for(let i = shopItems.length - 1; i >= 0; i--) { // show items
     for(let k = shopItems[i].length - 1; k >= 0; k--) {
       shopItems[i][k].visible = true;
@@ -1239,6 +1294,12 @@ function buyItems() {
             shopItems[i][k].remove(); // get rid of item
             shopItems[i].splice(k, 1);
           }
+
+          if (shopItems[i][k] === gatekey) { // buy gate key
+            gatekeys += 1
+            shopItems[i][k].remove(); // get rid of item
+            shopItems[i].splice(k, 1);
+          }
         }
       }
     }
@@ -1248,8 +1309,8 @@ function buyItems() {
 function dodgeRoll() {
   if(rolling === true) {
     if(millis() - player.rolling < player.rolltime) { // makes you invulnerable for a small while
-      player.iframes2 = millis() - 700 // invulnerable
-      player.moveTo(player.x + player.vel.x * 20, player.y + player.vel.y * 20, 8) // move in direction you weren't previously going in
+      player.iframes2 = millis() - 970 // invulnerable
+      player.moveTo(player.x + player.vel.x * 30, player.y + player.vel.y * 30, 12) // move in direction you weren't previously going in
       player.mirror.y = true; // flips sprite upside down
     }
 
@@ -1452,6 +1513,12 @@ function checkState() {
     text("R - Reload", width/2 - 290, height/5 + 240);
     text("B - Buy Items", width/2 - 290, height/5 + 280);
     text("Q - Unlock", width/2 - 290, height/5 + 320);
+    text("Scroll - Change Gun", width/2 - 290, height/5 + 360);
+    textSize(20);
+    text("Dodge Rolling: If you ever find yourself about to hit an", width/2 - 290, height/5 + 400);
+    text("enemy or projectile, dodge through it!", width/2 - 290, height/5 + 440);
+    text("Gun Change: If you open a chest and find a gun in it,", width/2 - 290, height/5 + 480);
+    text("scroll to switch guns!", width/2 - 290, height/5 + 520);
   }
 
   if(gamestate === "win") { // controls menu
@@ -1461,6 +1528,15 @@ function checkState() {
     gun.visible = false;
     fill("white");
     text("you did it! cool", width/2, height/2);
+  }
+
+  if(gamestate === "lose") { // loss menu
+    fill(41, 30, 49);
+    rect(0, 0, width, height);
+    player.visible = false;
+    gun.visible = false;
+    fill("white");
+    text("wah wah, refresh?", width/2, height/2);
   }
 }
 
@@ -1487,4 +1563,12 @@ function makeButton(x, y, width, height, rectcolor, textcolor, textsize, textc, 
 function mouseIn(left, right, top, bottom){ // flag game code, button parameter function
   return mouseX >= left && mouseX <= right && 
   mouseY >= top && mouseY <= bottom;
+}
+
+function chestOpen() {
+  n = Math.floor(random(0, guns.length));
+  playerguns.push(guns[n]);
+  guns.splice(n, 1);
+  chest.remove();
+  theChests = []
 }

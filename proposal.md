@@ -3,26 +3,34 @@
 Dungeon Crawler Bullet Hell Game
 
 ## Needs to Have list
-- 1 dungeon floors
+- 1 dungeon floors (complete)
 - Multiple types of items
-    - Passive buffs
-    - Healing
-    - Money
-- Dodge rolling (period of immunity where no damage)
-- 4-5 enemy types
-- Sound
-- Decent sprites
+    - Passive buffs (no)
+    - Healing (complete)
+    - Money (complete)
+- Dodge rolling (period of immunity where no damage) (complete)
+- 4-5 enemy types (2 enemy types)
+- Sound (no)
+- Decent sprites (complete)
 
 ## Want to Have List
-- Random events
-- amazing sprites
-- Breakable objects
-- Floor Bosses
-- Multiple weapons
-- Shop NPCs
-- Animation
-
-## Unsure where to put
-- Somewhat randomly generating rooms
+- Random events (no)
+- amazing sprites (complete)
+- Breakable objects (no)
+- Floor Bosses (complete)
+- Multiple weapons (complete)
+- Shop NPCs (complete)
+- Animation (complete)
+- Somewhat randomly generating rooms (complete)
     -Generation dependent on floor
     - 6-7 rooms per floor
+
+
+# Total Incomplete Needs
+- Sound
+- Passive Buffs
+- Multiple Enemy Types
+
+# Total Incomplete Nice to Haves
+- Breakable Objects
+- Random Events
