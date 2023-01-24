@@ -24,6 +24,7 @@ let shopItems = [[], [], [], []];
 let gamestate;
 
 let player;
+let playeryPos, playeryPos2, playerxPos, playerxPos2;
 
 let map = [[0,0,0,0], 
            [0,0,0,0],
@@ -480,8 +481,8 @@ function spawnEnemies() {
     enemy.yPos2 = Math.floor((enemy.y + enemy.height/2)/cellHeight);
 
     while (!(enemy.xPos > 0 && enemy.yPos > 0 && enemy.yPos2 < ROWS - 1 && enemy.xPos2 < COLS - 1) || room[enemy.yPos][enemy.xPos] !== 0 || room[enemy.yPos2][enemy.xPos] !== 0 
-    || room[enemy.yPos][enemy.xPos2] !== 0 || room[enemy.yPos2][enemy.xPos2] !== 0) {
-      // keep rerolling enemy position until it's not in a wall and not out of bounds
+    || room[enemy.yPos][enemy.xPos2] !== 0 || room[enemy.yPos2][enemy.xPos2] !== 0 || dist(player.x, player.y, enemy.x, enemy.y) < 300) {
+      // keep rerolling enemy position until it's not in a wall and not out of bounds and 
       enemy.x = random(0 + enemyWidth, width - enemyWidth)
       enemy.y = random(0 + enemyWidth, height - enemyWidth)
 
@@ -1025,7 +1026,8 @@ function newRoom() { // does things once room is entered
 
   }
 
-  if (millis() - time > 2000 && room.status === "incomplete" || millis() - time > 2000 && room.status === "boss") { // once it's been 2 seconds block the doors and spawn the enemies
+  if (playeryPos !== 0 && playeryPos2 !== ROWS - 1 && playerxPos !== 0 && playerxPos2 !== COLS -1 && millis() - time > 2000 && room.status === "incomplete" || millis() - time > 2000 && room.status === "boss") { 
+    // once it's been 2 seconds block the doors and spawn the enemies, also don't blockade if you're in walls
     blockade(room);
     if (room.status === "incomplete") {
       room.status = "in progress";
@@ -1215,8 +1217,8 @@ function doShop() {
       for(let k = room[i].length - 1; k >= 0; k--) {
         if(room[i][k] === 3) {
 
-          randitem = itemTypes[Math.floor(random(0, itemTypes.length))] // picks a random item
-  
+         randitem = itemTypes[Math.floor(random(0, itemTypes.length))] // picks a random item
+          console.log(randitem)
           if(randitem === "heart") { // heartitem
             heart = new Sprite(cellWidth * k + cellWidth/2, cellHeight * i + heartimg.height/2, "n");
             heart.value = 5;
@@ -1259,46 +1261,41 @@ function buyItems() {
   for(let i = shopItems.length - 1; i >=0; i--) {
     for(let k = shopItems[i].length - 1; k >=0; k--) {
       if(dist(player.x,  player.y, shopItems[i][k].x, shopItems[i][k].y) < 100 && shopItems[i][k].visible === true) { // if close to displayed item
-
         textSize(cellWidth/2); // display item cost
         textFont(font);
         text(shopItems[i][k].value, shopItems[i][k].x - cellWidth/4 + shopItems[i][k].width/4, shopItems[i][k].y - cellHeight/2);
 
         if(keyCode === 66 && money >= shopItems[i][k].value) { // if B is pressed and you have enough money
-          money -= shopItems[i][k].value; // take away money
-
-          if (shopItems[i][k] === heart) { // buy heart
-            if (player.health !== player.healthtotal) { // only purchase if you're not at full health
-              player.health += 2;
-              shopItems[i][k].remove(); // get rid of item
-              shopItems[i].splice(k, 1);
-            }
-            else {
-              money += shopItems[i][k].value;
-            }
+          if (shopItems[i][k] === heart && player.health !== player.healthtotal) { // buy heart
+            money -= shopItems[i][k].value; // take away money
+            player.health += 2;
+            shopItems[i][k].remove(); // get rid of item
+            shopItems[i].splice(k, 1);
+            console.log("heart");
           }
           
-          if (shopItems[i][k] === halfheart) { // buy halfheart
-            if (player.health !== player.healthtotal) { // only purchase if you're not at full health
-              player.health += 1;
-              shopItems[i][k].remove(); // get rid of item
-              shopItems[i].splice(k, 1);
-            }
-            else {
-              money += shopItems[i][k].value;
-            }
+          if (shopItems[i][k] === halfheart && player.health !== player.healthtotal) { // buy halfheart
+            money -= shopItems[i][k].value; // take away money
+            player.health += 1;
+            shopItems[i][k].remove(); // get rid of item
+            shopItems[i].splice(k, 1);
+            console.log("halfheart");
           }
 
           if (shopItems[i][k] === key) { // buy key
+            money -= shopItems[i][k].value; // take away money
             keys += 1
             shopItems[i][k].remove(); // get rid of item
             shopItems[i].splice(k, 1);
+            console.log("key");
           }
 
           if (shopItems[i][k] === gatekey) { // buy gate key
+            money -= shopItems[i][k].value; // take away money
             gatekeys += 1
             shopItems[i][k].remove(); // get rid of item
             shopItems[i].splice(k, 1);
+            console.log("gatekey");
           }
         }
       }

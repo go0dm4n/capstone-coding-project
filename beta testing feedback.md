@@ -1,0 +1,11 @@
+Lila:
+- I liked it
+- Visually appealing
+- Frog hat good
+- At my skill level (low)
+- Liked Blorbo
+- Got stuck in walls 
+- Going down sometimes breaks
+- Shop broken
+- Different guns were cool
+- Hated spike room because bad at it
