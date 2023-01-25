@@ -430,7 +430,7 @@ function movePlayer(){ // player movement and drawing
 function mousePressed() {
   if (gamestate === "game") {
     shootBullet(); // shoot gun
-    // changeTile();
+    // changeTile(); // for level design, probably could've made a level editor feature but oh well
   }
 }
 
@@ -454,12 +454,12 @@ function keyPressed() {
     rolling = true;
   }
 
-  if(keyCode === 81 && dist(player.x, player.y, gate.x, gate.y) < 150 && gate.visible === true && gatekeys > 0) { // unlock when Q pressed
+  if(keyCode === 81 && dist(player.x, player.y, gate.x, gate.y) < 150 && gate.visible === true && gatekeys > 0) { // unlock gate when Q pressed
     gatekeys -= 1;
     gate.remove(); // delete gate
   }
 
-  if (theChests.length > 0) { // unlock when Q pressed
+  if (theChests.length > 0) { // unlock chest when Q pressed
     if(keyCode === 81 && dist(player.x, player.y, chest.x, chest.y) < 150 && chest.visible === true && keys > 0) { 
       keys -= 1;
       chestOpen();
@@ -482,7 +482,7 @@ function spawnEnemies() {
 
     while (!(enemy.xPos > 0 && enemy.yPos > 0 && enemy.yPos2 < ROWS - 1 && enemy.xPos2 < COLS - 1) || room[enemy.yPos][enemy.xPos] !== 0 || room[enemy.yPos2][enemy.xPos] !== 0 
     || room[enemy.yPos][enemy.xPos2] !== 0 || room[enemy.yPos2][enemy.xPos2] !== 0 || dist(player.x, player.y, enemy.x, enemy.y) < 300) {
-      // keep rerolling enemy position until it's not in a wall and not out of bounds and 
+      // keep rerolling enemy position until it's not in a wall and not out of bounds and far from player
       enemy.x = random(0 + enemyWidth, width - enemyWidth)
       enemy.y = random(0 + enemyWidth, height - enemyWidth)
 
@@ -547,7 +547,7 @@ function enemyShot() { // enemy bullet collision check
   }
 
   if (room.status === "boss battle") {
-    for(let i = theBullets.length - 1; i >= 0; i--) { // boss shot
+    for(let i = theBullets.length - 1; i >= 0; i--) { // boss gets shot
       if (theBullets[i].overlaps(boss)) {
         boss.health -= theBullets[i].strength; 
         theBullets[i].remove(); 
@@ -557,7 +557,7 @@ function enemyShot() { // enemy bullet collision check
       }
     }
 
-    if (boss.health <= 0) { // if enemies lose all health   
+    if (boss.health <= 0) { // if boss loses all health   
       boss.remove();
       gamestate = "win"
     }
@@ -571,13 +571,15 @@ function checkCollide() { // player collision
           player.iframes2 = millis() // give player immunity
       }
   }
+
   for (let i = enemyBullets.length - 1; i >= 0; i--) {
-    if (player.overlaps(enemyBullets[i]) && millis() - player.iframes2 > player.iframes){ // player collides with enemy body
+    if (player.overlaps(enemyBullets[i]) && millis() - player.iframes2 > player.iframes){ // player collides with enemy bullets
           player.health -= 1 //reduce health
           player.iframes2 = millis() // give player immunity
       }
   }
-  if (player.health < 0) {
+
+  if (player.health < 0) { // game over if health = 0
     gamestate = "lose"
   }
 }
@@ -629,7 +631,7 @@ function shootBullet() { // spawns and moves bullets to cursor
       machinegun.bulletspread1 = millis()
       gun.ammo-- //reduce ammo
 
-      bullet = new Sprite(gun.x + gun.width/2, gun.y, 300);
+      bullet = new Sprite(gun.x + gun.width/2, gun.y, 200);
     
       bullet.overlaps(player) // bullet doesnt collide with player
       bullet.image = machinegunbulletimage;
@@ -775,7 +777,7 @@ function drawRoom() { // draws room based on tiles
 
       } 
 
-      if (room[i][k] === 2) { // tables
+      if (room[i][k] === 2) { // if tile = 2 draw tables
 
         if(room[i][k - 1] === 2 && room[i + 1][k] === 2 && room[i][k + 1] === 2 && room[i - 1][k] !== 2) { // top middle
           image(tileTA5, k * cellWidth, i * cellHeight, cellWidth, cellHeight)
@@ -814,11 +816,11 @@ function drawRoom() { // draws room based on tiles
         }
       }
 
-      if (room[i][k] === 3) { //special table for items
+      if (room[i][k] === 3) { // if tile = 3 draw special table for items
         image(tileTA, k * cellWidth, i * cellHeight, cellWidth, cellHeight);
       }
 
-      if (room[i][k] === -1) { //spikes
+      if (room[i][k] === -1) { // if tile = -1 draw spikes
         image(spike, k * cellWidth, i * cellHeight, cellWidth, cellHeight);
       }
 
@@ -849,19 +851,22 @@ function changeTile(){ // room editing tool
 
 function moveEnemies() {
   for(let i = theEnemies.length - 1; i >= 0; i--) {
-    if (theEnemies[i].totalhealth === 1) {
+
+    if (theEnemies[i].totalhealth === 1) { // red animation
       theEnemies[i].ani = "walk1"
     }
-    if (theEnemies[i].totalhealth === 2) {
+
+    if (theEnemies[i].totalhealth === 2) { // blue animation
       theEnemies[i].ani = "walk2"
     }
-    theEnemies[i].xPos = Math.floor((theEnemies[i].x - theEnemies[i].width/2)/cellWidth); // left of enemy
 
-    theEnemies[i].yPos = Math.floor((theEnemies[i].y - theEnemies[i].height/2)/cellHeight); // top of enemy
+    theEnemies[i].xPos = Math.floor((theEnemies[i].x - theEnemies[i].width/2)/cellWidth); // enemy positions
 
-    theEnemies[i].xPos2 = Math.floor((theEnemies[i].x + theEnemies[i].width/2)/cellWidth); // right of enemy
+    theEnemies[i].yPos = Math.floor((theEnemies[i].y - theEnemies[i].height/2)/cellHeight); 
 
-    theEnemies[i].yPos2 = Math.floor((theEnemies[i].y + theEnemies[i].height/2)/cellHeight); // bottom of enemy
+    theEnemies[i].xPos2 = Math.floor((theEnemies[i].x + theEnemies[i].width/2)/cellWidth); 
+
+    theEnemies[i].yPos2 = Math.floor((theEnemies[i].y + theEnemies[i].height/2)/cellHeight); 
 
     if(touchingWall(theEnemies[i].xPos, theEnemies[i].yPos, theEnemies[i].xPos2, theEnemies[i].yPos2)) { // if not touching wall
 
@@ -920,23 +925,15 @@ function touchingWall(left, top, right, bottom) {
   return room[top][left] !== 1 && room[bottom][left] !== 1 && room[top][right] !== 1 && room[bottom][right] !== 1;
 }
 
-function wallRight(left, top, right, bottom) {
-  return room[top][right + 1] === 1 || room[bottom][right + 1] === 1 && (room[bottom][left - 1] ==! 1 && room[top][left - 1] ==! 1);
-}
-
-function wallAbove(left, top, right, bottom) {
-  return (room[top - 1][right] === 1 && room[top - 1][left] === 1) && room[bottom + 1][right] === 1 || room[bottom + 1][left] === 1 
-}
-
 function mapPosition() { // finds where you are on the map
-  mapY = -1
-  for (let i = 0; i <= map.length; i++) {
-    mapY++
-    mapX = -1
+  mapY = -1;
+  for (let i = 0; i <= map.length; i++) { // everytime it goes through without finding the room, increase mapY
+    mapY++;
+    mapX = -1;
     for (let k = 0; k <= map[i].length; k++) {
-      mapX++
-      if(map[i][k] === room) {
-        return mapX, mapY;
+      mapX++;
+      if(map[i][k] === room) { // if the room you're in matches the one it's currently searched for, stop the count there
+        return mapX, mapY;;
       }
     }
   }
@@ -975,7 +972,7 @@ function changeRoom() { // if you go through a door, change the room
     }
   }
 
-  newr = true
+  newr = true // trigger newRoom()
 }
 
 function newRoom() { // does things once room is entered
@@ -1057,7 +1054,7 @@ function blockade(room) { // blocks the doors
     }
   }
 
-  for (let i = 19; i >= 0; i--){
+  for (let i = 19; i >= 0; i--){ // block edges of the room
     for (let k = room[i].length - 1; k >= 0; k--){
       if (i === 0){
         room[i][k] = 1;
@@ -1085,17 +1082,18 @@ function roomComplete(){ // if all the enemies are dead
             chest.image = chestimg
             room.chest = true; // prevent multiple chests
             theChests.push(chest)
-          }
-          else if (random(0, 5) > 1 && room.chest === false) {
-            room.chest = "failed" // no chest
-          }
+        }
 
-          for (let i = 0; i < 20; i++) {
-            for (let k = 0; k < room[i].length; k++) {
-              room[i][k] = oldroom[i][k];
+        else if (random(0, 5) > 1 && room.chest === false) {
+          room.chest = "failed" // no chest
+        }
+
+        for (let i = 0; i < 20; i++) { // reset room to how it was before
+          for (let k = 0; k < room[i].length; k++) {
+            room[i][k] = oldroom[i][k];
           }
         }
-     }
+      }
     }
   }
 }
@@ -1187,9 +1185,7 @@ function drawStuff() {
 }
 
 function reload() { // if R is pressed, after a certain amount of time refill magazine
-
   if(reloading === true) {
-
     if (millis() - gun.reload < gun.reloadtime) { // reload wait time
       fill("white");
       rect(player.x - player.width * 1.1, player.y - player.height * 1.1, player.width * 2.2, player.height / 5);
@@ -1206,10 +1202,8 @@ function reload() { // if R is pressed, after a certain amount of time refill ma
   }
 }
 
-function doShop() {
-
+function doShop() { // places shop items
   room.status = "shopping" // so items dont respawn
-
   shopkeeper.visible = true // show shopkeeper
 
   if(shopItems[0].length === 0 && shopItems[1].length === 0 && shopItems[2].length === 0 ){
@@ -1244,7 +1238,7 @@ function doShop() {
     }
   }
 
-  gatekey = new Sprite(cellWidth * 15 + cellWidth/2, cellHeight * 15 + heartimg.height/2, "n");
+  gatekey = new Sprite(cellWidth * 15 + cellWidth/2, cellHeight * 15 + heartimg.height/2, "n"); // gatekey, there's always a gatekey so the game is completable
   gatekey.value = 7;
   gatekey.img = gatekeyimg;
   shopItems[3].push(gatekey);  
@@ -1257,7 +1251,7 @@ function doShop() {
 
 }
 
-function buyItems() {
+function buyItems() { // if B pressed next to item
   for(let i = shopItems.length - 1; i >=0; i--) {
     for(let k = shopItems[i].length - 1; k >=0; k--) {
       if(dist(player.x,  player.y, shopItems[i][k].x, shopItems[i][k].y) < 100 && shopItems[i][k].visible === true) { // if close to displayed item
@@ -1303,7 +1297,7 @@ function buyItems() {
   }
 }
 
-function dodgeRoll() {
+function dodgeRoll() { // dodges through enemies and bullets if E pressed
   if(rolling === true) {
     if(millis() - player.rolling < player.rolltime) { // makes you invulnerable for a small while
       player.iframes2 = millis() - 970 // invulnerable
@@ -1319,7 +1313,7 @@ function dodgeRoll() {
   }
 }
 
-function startbossFight() {
+function startbossFight() { // creates boss Sprite
   if (room.status === "boss") {
     boss = new Sprite (width/2, height/4, 300, 300, 'd');
     boss.addAni('moving', "assets/boss/bossidle/boss_moving_01.png", 2);
@@ -1329,31 +1323,33 @@ function startbossFight() {
     boss.addAni('hurt', "assets/boss/bosshurt/boss_hurt_01.png", 3);
     boss.totalhealth = 65;
     boss.health = 65;
-    room.status = "boss battle";
+    room.status = "boss battle"; // starts bossAI function
     boss.status = "moving";
   }
 }
 
 function bossAI() { // boss movement and attack
   if(room.status === "boss battle") {
+
     for (let i = enemyBullets.length - 1; i >= 0; i--) { // bullets check
       if (enemyBullets[i].x > width || enemyBullets[i].x < 0 || enemyBullets[i].y > height || enemyBullets[i].y < 0) {
         enemyBullets[i].remove();
         enemyBullets.splice(i, 1);
       }
     }
+
     if (enemyBullets.length === 0) { // if all the bullets are gone, allow boss to move
       boss.status = "moving";
     } 
 
-    if(boss.vel.x > 0) {
+    if(boss.vel.x > 0) { // boss turns as it moves
       boss.mirror.x = true;
     }
     else {
       boss.mirror.x = false;
     }
 
-    fill("white") // boss healthbar
+    fill("white") // boss healthbar and name
     rect(width/4, 20, width/2, 50);
     fill("green");
     rect(width/4, 20, width/2 / (boss.totalhealth / boss.health), 50);
@@ -1485,7 +1481,7 @@ function bossAI() { // boss movement and attack
   }
 }
 
-function checkState() {
+function checkState() { // gamestate menus
   if(gamestate === "main") { // draw main menu
     fill(41, 30, 49);
     rect(0, 0, width, height);
@@ -1518,7 +1514,7 @@ function checkState() {
     text("scroll to switch guns!", width/2 - 290, height/5 + 520);
   }
 
-  if(gamestate === "win") { // controls menu
+  if(gamestate === "win") { // win menu
     fill(41, 30, 49);
     rect(0, 0, width, height);
     player.visible = false;
@@ -1562,10 +1558,10 @@ function mouseIn(left, right, top, bottom){ // flag game code, button parameter 
   mouseY >= top && mouseY <= bottom;
 }
 
-function chestOpen() {
-  n = Math.floor(random(0, guns.length));
-  playerguns.push(guns[n]);
-  guns.splice(n, 1);
-  chest.remove();
+function chestOpen() { // if chest is opened
+  n = Math.floor(random(0, guns.length)); // pick random gun
+  playerguns.push(guns[n]); // add random gun to players inventory
+  guns.splice(n, 1); // remove random gun from possibilities
+  chest.remove(); // delete chest
   theChests = []
 }

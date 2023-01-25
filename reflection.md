@@ -1,5 +1,6 @@
 What advice would you give to yourself if you were to start a project like this again?
 Set your priorities straight, learn how to use p5,play properly, spend less time creating sprites.
+Also use groups.
 
 Did you complete everything in your "needs to have" list?
 
@@ -13,6 +14,5 @@ Were there any problems you could not solve?
 
 There are a few bugs that seemingly happen at random
 - if you enter a room from above, theres a small chance the game crashes 
-- In some runs, the shop doesn't work
 - Sometimes dodge rolling stops midair
 - Enemies can spawn with walls inside of them (i'm aware why this happens I just didn't bother fixing it)
